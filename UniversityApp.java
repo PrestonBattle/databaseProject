@@ -1,4 +1,5 @@
 import javax.swing.*;
+import java.util.Date;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
@@ -9,7 +10,7 @@ public class UniversityApp {
     private Connection conn;
     private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField, lNameField, fNameField, midInitField
     ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, degreeField, studClassField, 
-    curPhoneField, curAddressField, minorField;
+    curPhoneField, curAddressField, minorField, majorField;
     private JTable departmentTable, studentTable;
 
     public static void main(String[] args) {
@@ -78,6 +79,7 @@ public class UniversityApp {
         streetField = new JTextField();
         zipField = new JTextField();
         minorField = new JTextField();
+        majorField = new JTextField();
         //student attributes
         curPhoneField = new JTextField();
         curAddressField = new JTextField();
@@ -118,8 +120,10 @@ public class UniversityApp {
         inputPanel.add(curAddressField);
         inputPanel.add(new JLabel("Current Phone:"));
         inputPanel.add(curPhoneField);
-        inputPanel.add(new JLabel("Degree Program:"));
+        inputPanel.add(new JLabel("Degree:"));
         inputPanel.add(degreeField);
+        inputPanel.add(new JLabel("Major Program:"));
+        inputPanel.add(majorField);
         inputPanel.add(new JLabel("Minor Program:"));
         inputPanel.add(minorField);
         inputPanel.add(new JLabel("Class:"));
@@ -146,19 +150,32 @@ public class UniversityApp {
             String state = stateField.getText().trim();
             String zip = zipField.getText().trim();
             String curAddress = curAddressField.getText().trim();
+            String major = majorField.getText().trim();
             String minor = minorField.getText().trim();
             String studClass = studClassField.getText().trim();
-            String degree = studClassField.getText().trim();
+            String degree = degreeField.getText().trim();
             
 
             if (minor.isEmpty() && !id.isEmpty()) {
             	//handling students without minors
+            	try {
             	addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
             	addStudents(id, curAddress, phone, studClass, degree);
-            	addMajorIn(id, degree);
+            	addMajorIn(id, major);
+            	loadStudents();
+            	}catch (Exception ex) {
+            	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
+            	}
                
             } else if(!minor.isEmpty() && !id.isEmpty()){
-            	
+            	try {
+                	addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
+                	addStudents(id, curAddress, phone, studClass, degree);
+                	addMinorIn(id, minor);
+                	loadStudents();
+                	}catch (Exception ex) {
+                	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
+                	}
             }else {
                 JOptionPane.showMessageDialog(panel, "ID and Name are required.");
             }
@@ -274,7 +291,7 @@ public class UniversityApp {
     private void loadStudents() {
     	String sql = """
     	        SELECT 
-    	            p.N#, p.First_Name, p.Last_Name, p.Middle_Initial, p.BirthDate, p.sex,
+    	            p.N#, p.ssn, p.First_Name, p.Last_Name, p.Middle_Initial, p.BirthDate, p.sex,
     	            p.city, p.state, p.street, p.zip, s.Current_Address, s.Current_Phone, s.Degree_Program, s.Class
     	        FROM 
     	            person p
@@ -311,7 +328,7 @@ public class UniversityApp {
     // Placeholder methods
     private void addStudents(String id, String curAddress, String curPhone, String studClass, String Degree) {
 
-        String sql = "INSERT INTO student (N#, Current_Address, Current_Phone, Degree, Class) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO student (N#, Current_Address, Current_Phone, Degree_Program, Class) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             stmt.setString(2, curAddress);
@@ -330,7 +347,7 @@ public class UniversityApp {
     }
     
     private void addMajorIn(String id, String depId) {
-    	 String sql = "INSERT INTO majorIn (N#, deptCode) VALUES (?, ?, ?, ?, ?)";
+    	 String sql = "INSERT INTO majorIn (N#, deptCode) VALUES (?, ?)";
          try (PreparedStatement stmt = conn.prepareStatement(sql)) {
              stmt.setString(1, id);
              stmt.setString(2, depId);
@@ -341,7 +358,7 @@ public class UniversityApp {
          }
     }
     private void addMinorIn(String id, String depId) {
-   	 String sql = "INSERT INTO minorIn (N#, deptCode) VALUES (?, ?, ?, ?, ?)";
+   	 String sql = "INSERT INTO minorIn (N#, deptCode) VALUES (?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             stmt.setString(2, depId);
