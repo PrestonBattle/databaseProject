@@ -56,7 +56,7 @@ public class UniversityApp {
 
         // Instructor 
         JPanel instructorPanel = new JPanel();
-        instructorPanel.add(new JLabel("Instructor Management Coming Soon..."));
+        
         tabbedPane.addTab("Instructors", instructorPanel);
 
         frame.add(tabbedPane);
