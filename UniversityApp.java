@@ -56,7 +56,7 @@ public class UniversityApp {
 
         // Instructor 
         JPanel instructorPanel = new JPanel();
-        
+       
         tabbedPane.addTab("Instructors", instructorPanel);
 
         frame.add(tabbedPane);
@@ -98,6 +98,8 @@ public class UniversityApp {
         inputPanel.add(lNameField);
         inputPanel.add(new JLabel("Middle Initial:"));
         inputPanel.add(midInitField);
+        inputPanel.add(new JLabel("Sex:"));
+        inputPanel.add(sexField);
         inputPanel.add(new JLabel("Birthdate:"));
         inputPanel.add(birthDateSpinner);
         inputPanel.add(new JLabel("Student N#:"));
@@ -122,13 +124,45 @@ public class UniversityApp {
         inputPanel.add(minorField);
         inputPanel.add(new JLabel("Class:"));
         inputPanel.add(studClassField);
-        inputPanel.add(new JLabel()); // filler
+        inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
         
         panel.add(inputPanel, BorderLayout.NORTH);
         
         studentTable = new JTable();
         panel.add(new JScrollPane(studentTable), BorderLayout.CENTER);
+        
+        addButton.addActionListener(e -> {
+            String id = nNumField.getText().trim();
+            String sex = sexField.getText().trim();
+            String fName = fNameField.getText().trim();
+            String lName = lNameField.getText().trim();
+            String midInit = midInitField.getText().trim();
+            String ssn = ssnField.getText().trim();
+            String phone = curPhoneField.getText().trim();
+            Date birthDate = (Date) birthDateSpinner.getValue();
+            String street = streetField.getText().trim();
+            String city = cityField.getText().trim();
+            String state = stateField.getText().trim();
+            String zip = zipField.getText().trim();
+            String curAddress = curAddressField.getText().trim();
+            String minor = minorField.getText().trim();
+            String studClass = studClassField.getText().trim();
+            String degree = studClassField.getText().trim();
+            
+
+            if (minor.isEmpty() && !id.isEmpty()) {
+            	//handling students without minors
+            	addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
+            	addStudents(id, curAddress, phone, studClass, degree);
+            	addMajorIn(id, degree);
+               
+            } else if(!minor.isEmpty() && !id.isEmpty()){
+            	
+            }else {
+                JOptionPane.showMessageDialog(panel, "ID and Name are required.");
+            }
+        });
         
         loadStudents();
         
@@ -277,12 +311,12 @@ public class UniversityApp {
     // Placeholder methods
     private void addStudents(String id, String curAddress, String curPhone, String studClass, String Degree) {
 
-        String sql = "INSERT INTO student (N#, Current_Address, Current_Phone, Middle_Initial, Class) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO student (N#, Current_Address, Current_Phone, Degree, Class) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             stmt.setString(2, curAddress);
             stmt.setString(3, curPhone);
-            stmt.setString(4, midInit);
+            stmt.setString(4, Degree);
             stmt.setString(5, studClass);
 
             stmt.executeUpdate();
@@ -294,6 +328,29 @@ public class UniversityApp {
         //need to add major in functions and minor in functions
         
     }
+    
+    private void addMajorIn(String id, String depId) {
+    	 String sql = "INSERT INTO majorIn (N#, deptCode) VALUES (?, ?, ?, ?, ?)";
+         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+             stmt.setString(1, id);
+             stmt.setString(2, depId);
+             stmt.executeUpdate();
+             JOptionPane.showMessageDialog(null, "Student major added!");
+         } catch (SQLException e) {
+             JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
+         }
+    }
+    private void addMinorIn(String id, String depId) {
+   	 String sql = "INSERT INTO minorIn (N#, deptCode) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            stmt.setString(2, depId);
+            stmt.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Student minor added!");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
+        }
+   }
 
     private void addInstructor() {
         
