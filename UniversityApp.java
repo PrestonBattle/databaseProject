@@ -9,8 +9,8 @@ public class UniversityApp {
 
     private Connection conn;
     private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField, lNameField, fNameField, midInitField
-    ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, degreeField, studClassField, 
-    curPhoneField, curAddressField, minorField, majorField;
+    ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, permCityField, permStateField, permStreetField, permZipField, degreeField, studClassField, 
+    curPhoneField, curAddressField, minorField, majorField, permPhoneField;
     private JTable departmentTable, studentTable;
 
     public static void main(String[] args) {
@@ -59,31 +59,43 @@ public class UniversityApp {
         JPanel instructorPanel = new JPanel();
         tabbedPane.addTab("Instructors", instructorPanel);
         
-        JPanel coursePanel = new JPanel();
+        JPanel coursePanel = coursePanel();
         tabbedPane.addTab("Courses", coursePanel);
 
         frame.add(tabbedPane);
         frame.setVisible(true);
     }
     
+    private JPanel coursePanel(){
+    	JPanel panel = new JPanel(new BorderLayout());
+    	return panel; 
+    }
+    
     private JPanel studentPanel() {
     	JPanel panel = new JPanel(new BorderLayout());
 
     	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+    	ssnField = new JTextField();
         fNameField = new JTextField();
         lNameField = new JTextField();
         midInitField = new JTextField();
         sexField = new JTextField();
-        ssnField = new JTextField();
+        
         nNumField = new JTextField();
         cityField = new JTextField();
         stateField = new JTextField();
         streetField = new JTextField();
         zipField = new JTextField();
+        
+        permCityField = new JTextField();
+        permStateField = new JTextField();
+        permStreetField = new JTextField();
+        permZipField = new JTextField();
         minorField = new JTextField();
         majorField = new JTextField();
         //student attributes
         curPhoneField = new JTextField();
+        permPhoneField = new JTextField();
         curAddressField = new JTextField();
         degreeField = new JTextField();
         studClassField = new JTextField();
@@ -110,6 +122,8 @@ public class UniversityApp {
         inputPanel.add(nNumField);
         inputPanel.add(new JLabel("Social Security Number:"));
         inputPanel.add(ssnField);
+        inputPanel.add(new JLabel("Current Address"));
+        inputPanel.add(new JLabel()); 
         inputPanel.add(new JLabel("Street:"));
         inputPanel.add(streetField);
         inputPanel.add(new JLabel("City:"));
@@ -118,10 +132,20 @@ public class UniversityApp {
         inputPanel.add(stateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(zipField);
-        inputPanel.add(new JLabel("Current Address:"));
-        inputPanel.add(curAddressField);
+        inputPanel.add(new JLabel("Permanent Address:"));
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(new JLabel("Street:"));
+        inputPanel.add(permStreetField);
+        inputPanel.add(new JLabel("City:"));
+        inputPanel.add(permCityField);
+        inputPanel.add(new JLabel("State:"));
+        inputPanel.add(permStateField);
+        inputPanel.add(new JLabel("Zip:"));
+        inputPanel.add(permZipField);
         inputPanel.add(new JLabel("Current Phone:"));
         inputPanel.add(curPhoneField);
+        inputPanel.add(new JLabel("Permanent Phone:"));
+        inputPanel.add(permPhoneField);
         inputPanel.add(new JLabel("Degree:"));
         inputPanel.add(degreeField);
         inputPanel.add(new JLabel("Major Program:"));
@@ -139,41 +163,47 @@ public class UniversityApp {
         panel.add(new JScrollPane(studentTable), BorderLayout.CENTER);
         
         addButton.addActionListener(e -> {
-            String id = nNumField.getText().trim();
-            String sex = sexField.getText().trim();
+        	String ssn = ssnField.getText().trim();
+            String nNum = nNumField.getText().trim();
             String fName = fNameField.getText().trim();
             String lName = lNameField.getText().trim();
             String midInit = midInitField.getText().trim();
-            String ssn = ssnField.getText().trim();
-            String phone = curPhoneField.getText().trim();
+            String sex = sexField.getText().trim();
+            String currPhone = curPhoneField.getText().trim();
+            String permPhone = permPhoneField.getText().trim();
             Date birthDate = (Date) birthDateSpinner.getValue();
             String street = streetField.getText().trim();
             String city = cityField.getText().trim();
             String state = stateField.getText().trim();
             String zip = zipField.getText().trim();
+            String permStreet = permStreetField.getText().trim();
+            String permCity = permCityField.getText().trim();
+            String permState = permStateField.getText().trim();
+            String permZip = permZipField.getText().trim();
             String curAddress = curAddressField.getText().trim();
             String major = majorField.getText().trim();
             String minor = minorField.getText().trim();
             String studClass = studClassField.getText().trim();
-            String degree = degreeField.getText().trim();
+            String degree_program = degreeField.getText().trim();
             
 
-            if (minor.isEmpty() && !id.isEmpty()) {
+            if (minor.isEmpty()) {
             	//handling students without minors
             	try {
             	//addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
-            	addStudents(id, curAddress, phone, studClass, degree);
-            	addMajorIn(id, major);
+            	addStudents(ssn, nNum, fName, midInit, lName, birthDate, sex, permZip, permCity, permState, permStreet, zip, city, state, street, permPhone,
+                		currPhone, degree_program, studClass);
+            	addMajorIn(nNum, major);
             	loadStudents();
             	}catch (Exception ex) {
             	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
             	}
                
-            } else if(!minor.isEmpty() && !id.isEmpty()){
+            } else if(!minor.isEmpty()){
             	try {
            
                 	//addStudents(id, curAddress, fName, lName, birthDate, sex, city, state, street, zip, midInit, phone, studClass, degree);
-                	addMinorIn(id, minor);
+                	addMinorIn(nNum, minor);
                 	loadStudents();
                 	}catch (Exception ex) {
                 	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
@@ -386,19 +416,15 @@ public class UniversityApp {
     
     private void loadStudents() {
     	String sql = """
-    	        SELECT 
-    	            p.N#, p.ssn, p.First_Name, p.Last_Name, p.Middle_Initial, p.BirthDate, p.sex,
-    	            p.city, p.state, p.street, p.zip, s.Current_Address, s.Current_Phone, s.Degree_Program, s.Class,
-    	            m.deptcode AS Major_Code,
-    	            mi.deptcode AS Minor_Code
-    	        FROM 
-    	            person p
-    	        JOIN 
-    	            student s ON p.N# = s.N#
-    	        LEFT JOIN 
-    	            majorin m ON p.N# = m.N#
-    	        LEFT JOIN 
-    	            minorin mi ON p.N# = mi.N#
+    	        SELECT s.N#, s.ssn, s.First_Name, s.Middle_Initial, s.Last_Name, s.BirthDate, s.sex,s.Permanent_Zip, s.Permanent_City, 
+    s.Permanent_State, s.Permanent_Street, s.Current_Zip, s.Current_City, s.Current_State, s.Current_Street, s.Permanent_Phone, s.Current_Phone, 
+    s.Degree_Program, s.Class, m.deptcode AS Major_Code, mi.deptcode AS Minor_Code
+FROM 
+    student s
+LEFT JOIN 
+    majorin m ON s.N# = m.N#
+LEFT JOIN 
+    minorin mi ON s.N# = mi.N#
     	        """;
     	try (Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(sql)) {
@@ -428,25 +454,40 @@ public class UniversityApp {
     }
 
     // Placeholder methods
-    private void addStudents(String id, String curAddress, String curPhone, String studClass, String Degree) {
+    private void addStudents(String ssn, String nNum, String fName, String midInit, String lName, Date birthDate, String sex,
+    	    String permZip, String permCity, String permState, String permStreet, String currZip, String currCity, String currState,
+    	    String currStreet, String permPhone, String currPhone, String degree_program, String studClass) {
 
-        String sql = "INSERT INTO student (N#, Current_Address, Current_Phone, Degree_Program, Class) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, id);
-            stmt.setString(2, curAddress);
-            stmt.setString(3, curPhone);
-            stmt.setString(4, Degree);
-            stmt.setString(5, studClass);
+    	    String sql = "INSERT INTO student (SSN, N#, First_Name, Middle_Initial, Last_Name, Birthdate, sex, Permanent_Zip"
+    	            + ", Permanent_city, permanent_state, permanent_street, current_zip, current_city, current_state,"
+    	            + "current_street, permanent_phone, current_phone, degree_program, class) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    	        stmt.setString(1, ssn);
+    	        stmt.setString(2, nNum);
+    	        stmt.setString(3, fName);
+    	        stmt.setString(4, midInit);
+    	        stmt.setString(5, lName);
+    	        stmt.setDate(6, new java.sql.Date(birthDate.getTime()));
+    	        stmt.setString(7, sex);
+    	        stmt.setString(8, permZip);
+    	        stmt.setString(9, permCity);
+    	        stmt.setString(10, permState);
+    	        stmt.setString(11, permStreet);
+    	        stmt.setString(12, currZip);
+    	        stmt.setString(13, currCity);
+    	        stmt.setString(14, currState);
+    	        stmt.setString(15, currStreet);
+    	        stmt.setString(16, permPhone);
+    	        stmt.setString(17, currPhone);  // Add this line to set the 17th parameter
+    	        stmt.setString(18, degree_program);
+    	        stmt.setString(19, studClass);
 
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Student added!");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
-        }
-        
-        //need to add major in functions and minor in functions
-        
-    }
+    	        stmt.executeUpdate();
+    	        JOptionPane.showMessageDialog(null, "Student added!");
+    	    } catch (SQLException e) {
+    	        JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
+    	    }
+    	}
     
     private void addMajorIn(String id, String depId) {
     	 String sql = "INSERT INTO majorIn (N#, deptCode) VALUES (?, ?)";
