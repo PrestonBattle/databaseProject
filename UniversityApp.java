@@ -10,8 +10,8 @@ public class UniversityApp {
     private Connection conn;
     private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField, lNameField, fNameField, midInitField
     ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, permCityField, permStateField, permStreetField, permZipField, degreeField, studClassField, 
-    curPhoneField, curAddressField, minorField, majorField, permPhoneField;
-    private JTable departmentTable, studentTable;
+    curPhoneField, curAddressField, minorField, majorField, permPhoneField, officePhoneField, ageField, officeNumField, studentDegreeField;
+    private JTable departmentTable, studentTable, instructorTable;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -56,7 +56,7 @@ public class UniversityApp {
         tabbedPane.addTab("Students", studentPanel);
 
         // Instructor 
-        JPanel instructorPanel = new JPanel();
+        JPanel instructorPanel = instructorPanel();
         tabbedPane.addTab("Instructors", instructorPanel);
         
         JPanel coursePanel = coursePanel();
@@ -74,7 +74,7 @@ public class UniversityApp {
     private JPanel studentPanel() {
     	JPanel panel = new JPanel(new BorderLayout());
 
-    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 6, 6));
     	ssnField = new JTextField();
         fNameField = new JTextField();
         lNameField = new JTextField();
@@ -98,6 +98,7 @@ public class UniversityApp {
         permPhoneField = new JTextField();
         curAddressField = new JTextField();
         degreeField = new JTextField();
+        studentDegreeField = new JTextField();
         studClassField = new JTextField();
         
         
@@ -123,7 +124,7 @@ public class UniversityApp {
         inputPanel.add(new JLabel("Social Security Number:"));
         inputPanel.add(ssnField);
         inputPanel.add(new JLabel("Current Address"));
-        inputPanel.add(new JLabel()); 
+        inputPanel.add(new JLabel(""));
         inputPanel.add(new JLabel("Street:"));
         inputPanel.add(streetField);
         inputPanel.add(new JLabel("City:"));
@@ -132,8 +133,8 @@ public class UniversityApp {
         inputPanel.add(stateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(zipField);
-        inputPanel.add(new JLabel("Permanent Address:"));
-        inputPanel.add(new JLabel()); 
+        inputPanel.add(new JLabel("Permenant Address"));
+        inputPanel.add(new JLabel(""));
         inputPanel.add(new JLabel("Street:"));
         inputPanel.add(permStreetField);
         inputPanel.add(new JLabel("City:"));
@@ -147,7 +148,7 @@ public class UniversityApp {
         inputPanel.add(new JLabel("Permanent Phone:"));
         inputPanel.add(permPhoneField);
         inputPanel.add(new JLabel("Degree:"));
-        inputPanel.add(degreeField);
+        inputPanel.add(studentDegreeField);
         inputPanel.add(new JLabel("Major Program:"));
         inputPanel.add(majorField);
         inputPanel.add(new JLabel("Minor Program:"));
@@ -217,101 +218,97 @@ public class UniversityApp {
         
         return panel;
     }
-    
-//    private JPanel instructorPanel() {
-//    	JPanel panel = new JPanel(new BorderLayout());
-//
-//    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
-//        fNameField = new JTextField();
-//        lNameField = new JTextField();
-//        midInitField = new JTextField();
-//        sexField = new JTextField();
-//        ssnField = new JTextField();
-//        nNumField = new JTextField();
-//        cityField = new JTextField();
-//        stateField = new JTextField();
-//        streetField = new JTextField();
-//        zipField = new JTextField();
-//        minorField = new JTextField();
-//        majorField = new JTextField();
-//        //student attributes
-//        deptIdField = new JTextField();
-//        curAddressField = new JTextField();
-//        degreeField = new JTextField();
-//        studClassField = new JTextField();
-//        
-//        
-//        SpinnerDateModel dateModel = new SpinnerDateModel();
-//        JSpinner birthDateSpinner = new JSpinner(dateModel);
-//        birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, "yyyy-MM-dd"));
-//        
-//        
-//        JButton addButton = new JButton("Add Student");
-//        
-//        inputPanel.add(new JLabel("First Name:"));
-//        inputPanel.add(fNameField);
-//        inputPanel.add(new JLabel("Last Name:"));
-//        inputPanel.add(lNameField);
-//        inputPanel.add(new JLabel("Middle Initial:"));
-//        inputPanel.add(midInitField);
-//        inputPanel.add(new JLabel("Sex:"));
-//        inputPanel.add(sexField);
-//        inputPanel.add(new JLabel("Birthdate:"));
-//        inputPanel.add(birthDateSpinner);
-//        inputPanel.add(new JLabel("Student N#:"));
-//        inputPanel.add(nNumField);
-//        inputPanel.add(new JLabel("Social Security Number:"));
-//        inputPanel.add(ssnField);
-//        inputPanel.add(new JLabel("Street:"));
-//        inputPanel.add(streetField);
-//        inputPanel.add(new JLabel("City:"));
-//        inputPanel.add(cityField);
-//        inputPanel.add(new JLabel("State:"));
-//        inputPanel.add(stateField);
-//        inputPanel.add(new JLabel("Zip:"));
-//        inputPanel.add(zipField);
-//        inputPanel.add(new JLabel("Current Address:"));
-//        inputPanel.add(curAddressField);
-//        inputPanel.add(new JLabel("Current Phone:"));
-//        inputPanel.add(curPhoneField);
-//        inputPanel.add(new JLabel("Degree:"));
-//        inputPanel.add(degreeField);
-//        inputPanel.add(new JLabel("Major Program:"));
-//        inputPanel.add(majorField);
-//        inputPanel.add(new JLabel("Minor Program:"));
-//        inputPanel.add(minorField);
-//        inputPanel.add(new JLabel("Class:"));
-//        inputPanel.add(studClassField);
-//        inputPanel.add(new JLabel()); 
-//        inputPanel.add(addButton);
-//        
-//        panel.add(inputPanel, BorderLayout.NORTH);
-//        
-//        studentTable = new JTable();
-//        panel.add(new JScrollPane(studentTable), BorderLayout.CENTER);
-//        
-//        addButton.addActionListener(e -> {
-//            String id = nNumField.getText().trim();
-//            String sex = sexField.getText().trim();
-//            String fName = fNameField.getText().trim();
-//            String lName = lNameField.getText().trim();
-//            String midInit = midInitField.getText().trim();
-//            String ssn = ssnField.getText().trim();
-//            String phone = curPhoneField.getText().trim();
-//            Date birthDate = (Date) birthDateSpinner.getValue();
-//            String street = streetField.getText().trim();
-//            String city = cityField.getText().trim();
-//            String state = stateField.getText().trim();
-//            String zip = zipField.getText().trim();
-//            
-//            
-//
-//        
-//        //loadStudents();
-//        
-//        //return panel;
-//    }
 
+    
+    private JPanel instructorPanel() {
+    	JPanel panel = new JPanel(new BorderLayout());
+
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        fNameField = new JTextField();
+        lNameField = new JTextField();
+        ssnField = new JTextField();
+        nNumField = new JTextField();
+        cityField = new JTextField();
+        stateField = new JTextField();
+        streetField = new JTextField();
+        zipField = new JTextField();
+        //student attributes
+        deptIdField = new JTextField();
+        officeNumField = new JTextField();
+        ageField = new JTextField();
+        officePhoneField = new JTextField();
+        
+        
+        
+        
+        
+        
+        JButton addButton = new JButton("Add Instructor");
+        
+        inputPanel.add(new JLabel("First Name:"));
+        inputPanel.add(fNameField);
+        inputPanel.add(new JLabel("Last Name:"));
+        inputPanel.add(lNameField);
+        inputPanel.add(new JLabel("Age:"));
+        inputPanel.add(ageField);
+        inputPanel.add(new JLabel("Instructor N#:"));
+        inputPanel.add(nNumField);
+        inputPanel.add(new JLabel("Social Security Number:"));
+        inputPanel.add(ssnField);
+        inputPanel.add(new JLabel("Current Address:"));
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(new JLabel("Street:"));
+        inputPanel.add(streetField);
+        inputPanel.add(new JLabel("City:"));
+        inputPanel.add(cityField);
+        inputPanel.add(new JLabel("State:"));
+        inputPanel.add(stateField);
+        inputPanel.add(new JLabel("Zip:"));
+        inputPanel.add(zipField);
+        inputPanel.add(new JLabel("Current Address:"));
+        inputPanel.add(curAddressField);
+        inputPanel.add(new JLabel("Office Number:"));
+        inputPanel.add(officeNumField);
+        inputPanel.add(new JLabel("Office Phone:"));
+        inputPanel.add(officePhoneField);
+        inputPanel.add(new JLabel("Associated Dept:"));
+        inputPanel.add(degreeField);
+        
+       
+       
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(addButton);
+        
+        panel.add(inputPanel, BorderLayout.NORTH);
+        
+        instructorTable = new JTable();
+        panel.add(new JScrollPane(instructorTable), BorderLayout.CENTER);
+        
+        addButton.addActionListener(e -> {
+        	String id = nNumField.getText().trim();
+            String sex = sexField.getText().trim();
+            String fName = fNameField.getText().trim();
+            String lName = lNameField.getText().trim();
+            String midInit = midInitField.getText().trim();
+            String ssn = ssnField.getText().trim();
+            String age = ageField.getText().trim();
+            String phone = officePhoneField.getText().trim();
+
+            String street = streetField.getText().trim();
+            String city = cityField.getText().trim();
+            String state = stateField.getText().trim();
+            String zip = zipField.getText().trim();
+
+            String department = degreeField.getText().trim();
+
+        });
+        //loadInstructors();
+        
+        return panel;
+    }
+    
+    
+//DONE
     private JPanel createDepartmentPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -365,7 +362,8 @@ public class UniversityApp {
 
         return panel;
     }
-
+    
+    //DONE
     private void addDepartment(String id, String name, String college, String officeNum, String phone) {
         String sql = "INSERT INTO department (Department_Name, Department_Code, College, Office#, Office_Phone) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -385,7 +383,7 @@ public class UniversityApp {
    
     //my functions to display data
     
-    //viewing departments
+    //viewing departments doNE
     private void loadDepartments() {
         String sql = "SELECT * FROM department";
         try (Statement stmt = conn.createStatement();
@@ -414,6 +412,7 @@ public class UniversityApp {
         }
     }
     
+    //function for loading students done
     private void loadStudents() {
     	String sql = """
     	        SELECT s.N#, s.ssn, s.First_Name, s.Middle_Initial, s.Last_Name, s.BirthDate, s.sex,s.Permanent_Zip, s.Permanent_City, 
@@ -512,36 +511,30 @@ LEFT JOIN
         }
    }
 
-    private void addInstructor() {
+    private void addInstructor(String ssn, String nNum, String fName, String lName, int age, String officeNumber, String zip, String city, String state, String street, String dep, String phone) {
         
-    }
+    	String sql = "INSERT INTO INSTRUCTOR (SSN, N#, First_Name, Last_Name, Age, office#, zip, city, state, street, associated_dept, office_phone) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, ssn);
+            stmt.setString(2, nNum);
+            stmt.setString(3, fName);
+            stmt.setString(4, lName);
+            stmt.setInt(5, age);
+            stmt.setString(6, officeNumber); 
+            stmt.setString(7, zip);
+            stmt.setString(8, city);
+            stmt.setString(9, state);
+            stmt.setString(10, street);
+            stmt.setString(11, dep);
+            stmt.setString(12, phone); 
 
-//    private void addPerson(String id, String ssn, String fName, String lName,
-//    		Date birthDate, String sex, String city, String state, String street,
-//    		String zip, String midInit) {
-//
-//    	String sql = "INSERT INTO person (SSN, N#, First_Name, Middle_Initial, Last_Name, BirthDate, sex, city, state, street, zip) " +
-//    			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-//
-//    	try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-//    		stmt.setString(1, ssn);
-//    		stmt.setString(2, id);
-//    		stmt.setString(3, fName);
-//    		stmt.setString(4, midInit); 
-//    		stmt.setString(5, lName);
-//    		stmt.setDate(6, new java.sql.Date(birthDate.getTime())); 
-//    		stmt.setString(7, sex);
-//    		stmt.setString(8, city);
-//    		stmt.setString(9, state);
-//    		stmt.setString(10, street);
-//    		stmt.setString(11, zip);
-//
-//    		stmt.executeUpdate();
-//    		JOptionPane.showMessageDialog(null, "Add person successful");
-//    	} catch (SQLException e) {
-//    		JOptionPane.showMessageDialog(null, "Error adding person: " + e.getMessage());
-//    	}
-//    }
+            stmt.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Instructor added!");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error adding instructor: " + e.getMessage());
+        }
+    	
+    }
 
     private void addCourses() {
        
