@@ -11,7 +11,7 @@ public class UniversityApp {
     private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField, lNameField, fNameField, midInitField
     ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, permCityField, permStateField, permStreetField, permZipField, degreeField, studClassField, 
     curPhoneField, curAddressField, minorField, majorField, permPhoneField, officePhoneField, ageField, officeNumField, studentDegreeField;
-    private JTable departmentTable, studentTable, instructorTable;
+    private JTable departmentTable, studentTable, instructorTable, courseTable;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -66,15 +66,10 @@ public class UniversityApp {
         frame.setVisible(true);
     }
     
-    private JPanel coursePanel(){
-    	JPanel panel = new JPanel(new BorderLayout());
-    	return panel; 
-    }
-    
     private JPanel studentPanel() {
     	JPanel panel = new JPanel(new BorderLayout());
 
-    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 6, 6));
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 4, 6, 6));
     	ssnField = new JTextField();
         fNameField = new JTextField();
         lNameField = new JTextField();
@@ -265,8 +260,6 @@ public class UniversityApp {
         inputPanel.add(stateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(zipField);
-        inputPanel.add(new JLabel("Current Address:"));
-        inputPanel.add(curAddressField);
         inputPanel.add(new JLabel("Office Number:"));
         inputPanel.add(officeNumField);
         inputPanel.add(new JLabel("Office Phone:"));
@@ -291,18 +284,23 @@ public class UniversityApp {
             String lName = lNameField.getText().trim();
             String midInit = midInitField.getText().trim();
             String ssn = ssnField.getText().trim();
-            String age = ageField.getText().trim();
+            int age = Integer.parseInt(ageField.getText().trim());
             String phone = officePhoneField.getText().trim();
 
             String street = streetField.getText().trim();
             String city = cityField.getText().trim();
             String state = stateField.getText().trim();
             String zip = zipField.getText().trim();
+            
+            String officeNumber = officeNumField.getText().trim();
 
-            String department = degreeField.getText().trim();
+            String dep = degreeField.getText().trim();
+            
+            addInstructor(ssn, id, fName, lName, age, officeNumber, zip, city, state, street, dep, phone);
+            loadInstructor();
 
         });
-        //loadInstructors();
+        loadInstructor();
         
         return panel;
     }
@@ -535,13 +533,162 @@ LEFT JOIN
         }
     	
     }
+    
+    private void loadInstructor() {
+    	String sql = """
+    	        SELECT *
+    	        From instructor
+    	        """;
+    	try (Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
 
-    private void addCourses() {
-       
+               ResultSetMetaData meta = rs.getMetaData();
+               int columns = meta.getColumnCount();
+
+               Vector<String> columnNames = new Vector<>();
+               for (int i = 1; i <= columns; i++) {
+                   columnNames.add(meta.getColumnName(i));
+               }
+
+               Vector<Vector<Object>> data = new Vector<>();
+               while (rs.next()) {
+                   Vector<Object> row = new Vector<>();
+                   for (int i = 1; i <= columns; i++) {
+                       row.add(rs.getObject(i));
+                   }
+                   data.add(row);
+               }
+
+               instructorTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+           } catch (SQLException e) {
+               JOptionPane.showMessageDialog(null, "Error loading students: " + e.getMessage());
+           }
+    	
     }
 
-    private void searchCourses() {
-       
+    private JPanel coursePanel() {
+    	JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        JTextField courseIdField = new JTextField();
+        JTextField courseNameField = new JTextField();
+        JTextField courseDescriptionField = new JTextField();
+        JTextField semesterHoursField = new JTextField();
+        deptIdField = new JTextField();
+        JTextField searchIdField = new JTextField();
+        JButton addButton = new JButton("Add Course");
+        JButton searchButton = new JButton("Search");
+
+        inputPanel.add(new JLabel("Course Name:"));
+        inputPanel.add(courseNameField);
+        inputPanel.add(new JLabel("Course ID:"));
+        inputPanel.add(courseIdField);
+        inputPanel.add(new JLabel("Course Description:"));
+        inputPanel.add(courseDescriptionField);
+        inputPanel.add(new JLabel("Semester Hours:"));
+        inputPanel.add(semesterHoursField);
+        inputPanel.add(new JLabel("Department Offered By:"));
+        inputPanel.add(deptIdField);
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(addButton);
+        
+        inputPanel.add(new JLabel("Search Courses"));
+        inputPanel.add(new JLabel()); 
+        
+        inputPanel.add(new JLabel("Department Id:"));
+        inputPanel.add(searchIdField);
+        
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(searchButton);
+        
+        panel.add(inputPanel, BorderLayout.NORTH);
+
+        courseTable = new JTable();
+        panel.add(new JScrollPane(courseTable), BorderLayout.CENTER);
+        searchButton.addActionListener(e -> {
+        	String searchId = searchIdField.getText().trim();
+        	
+        	searchCoursesByDept(searchId);
+        	searchIdField.setText("");
+        	
+        });
+        addButton.addActionListener(e -> {
+            String deptId = deptIdField.getText().trim();
+            String name = courseNameField.getText().trim();
+            String description = courseDescriptionField.getText().trim();
+            String courseId = courseIdField.getText().trim();
+            int hours = Integer.parseInt(semesterHoursField.getText().trim());
+
+            if (!courseId.isEmpty() && !deptId.isEmpty()) {
+                addCourse(courseId, deptId, name, description, hours);
+                courseIdField.setText("");
+                courseNameField.setText("");
+                courseDescriptionField.setText("");
+                semesterHoursField.setText("");
+                deptIdField.setText("");;
+                loadDepartments();
+                
+            } else {
+                JOptionPane.showMessageDialog(panel, "ID and Name are required.");
+            }
+        });
+
+        
+
+        return panel;
+    }
+    
+    private void addCourse(String courseNum, String deptId, String name, String description, int hours) {
+    	 
+    	String sql = "INSERT INTO course (course_number, department_offering, name, description, semester_hours) values (?, ?, ?, ?, ?)";
+    	try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    		stmt.setString(1, courseNum);
+            stmt.setString(2, deptId);
+            stmt.setString(3, name);
+            stmt.setString(4, description);
+            stmt.setInt(5, hours);
+
+            stmt.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Course added");
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error adding course: " + e.getMessage());
+        }
+    	
+    }
+    
+    
+    private void searchCoursesByDept(String deptId) {
+        String sql = """
+            SELECT *
+            FROM course
+            WHERE department_offering = ?
+            """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, deptId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                ResultSetMetaData meta = rs.getMetaData();
+                int columns = meta.getColumnCount();
+
+                Vector<String> columnNames = new Vector<>();
+                for (int i = 1; i <= columns; i++) {
+                    columnNames.add(meta.getColumnName(i));
+                }
+
+                Vector<Vector<Object>> data = new Vector<>();
+                while (rs.next()) {
+                    Vector<Object> row = new Vector<>();
+                    for (int i = 1; i <= columns; i++) {
+                        row.add(rs.getObject(i));
+                    }
+                    data.add(row);
+                }
+
+                courseTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error loading courses: " + e.getMessage());
+        }
     }
 
     private void searchCourseByInstructor() {
