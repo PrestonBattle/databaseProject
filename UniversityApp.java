@@ -1,7 +1,6 @@
-package com.example.jdbcpractice;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
-import javax.swing.*;
-import javax.swing.*;
 import java.util.Date;
 import java.awt.*;
 import java.awt.event.*;
@@ -12,9 +11,9 @@ public class UniversityApp {
 
     private Connection conn;
     private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField, lNameField, fNameField, midInitField
-            ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, permCityField, permStateField, permStreetField, permZipField, degreeField, studClassField,
-            curPhoneField, curAddressField, minorField, majorField, permPhoneField, officePhoneField, ageField, officeNumField, studentDegreeField;
-    private JTable departmentTable, studentTable, instructorTable, courseTable;
+    ,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, permCityField, permStateField, permStreetField, permZipField, degreeField, studClassField, 
+    curPhoneField, curAddressField, minorField, majorField, permPhoneField, officePhoneField, ageField, officeNumField, studentDegreeField;
+    private JTable departmentTable, studentTable, instructorTable, courseTable, gradeReportTable;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -54,37 +53,125 @@ public class UniversityApp {
         JPanel departmentPanel = createDepartmentPanel();
         tabbedPane.addTab("Departments", departmentPanel);
 
-        // Student Tab
+        // Student Tab 
         JPanel studentPanel = studentPanel();
         tabbedPane.addTab("Students", studentPanel);
 
-        // Instructor
+        // Instructor 
         JPanel instructorPanel = instructorPanel();
         tabbedPane.addTab("Instructors", instructorPanel);
-
+        
         JPanel coursePanel = coursePanel();
         tabbedPane.addTab("Courses", coursePanel);
+        
+        JPanel sectionPanel = sectionPanel();
+        tabbedPane.addTab("Sections", sectionPanel);
+        
+        //Assign Tab
+        JPanel assignPanel = assignStudentPanel();
+        tabbedPane.addTab("Assign Student", assignPanel);
+        
+        
+        JPanel gradePanel = gradeReportPanel();
+        tabbedPane.addTab("Grade Reports", gradePanel);
 
         frame.add(tabbedPane);
         frame.setVisible(true);
     }
+    
+    private JPanel gradeReportPanel() {
+    	JPanel panel = new JPanel(new BorderLayout());
+    	
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 6, 6));
+    	
+    	JTextField studIdField = new JTextField();
+    	JButton generateButton = new JButton("Generate Report");
+    	
+    	inputPanel.add(new JLabel("Generate Grade Report for Student"));
+    	inputPanel.add(new JLabel());
+    	
+    	inputPanel.add(new JLabel("Student N Number: "));
+    	inputPanel.add(new JLabel());
+    	inputPanel.add(studIdField);
+    	inputPanel.add(new JLabel());
+    	inputPanel.add(generateButton);
+    	inputPanel.add(new JLabel());
+    	
+    	panel.add(inputPanel, BorderLayout.NORTH);
+    	
+    	gradeReportTable = new JTable();
+    	panel.add(new JScrollPane(gradeReportTable), BorderLayout.CENTER);
+    	
+    	generateButton.addActionListener(e -> {
+    		
+    		String studId = studIdField.getText().trim();
+    		generateReport(studId);
+    	});
+    	
+    	return panel;
+    }
+    
+    private void generateReport(String studId) {
+        String sql = "SELECT s.first_name, s.last_name, s.n#, " +
+                     "e.course_number as course ,e.semester, e.year, " +
+                     "i.first_name as Instructor_first_name, " +
+                     "i.last_name as Instructor_last_name, " +
+                     "e.section#, e.grade  " +
+                     "FROM student s " +
+                     "JOIN enrolled_in e ON s.n# = e.n# " +
+                     "JOIN section ON section.year = e.year " +
+                     "AND section.semester = e.semester " +
+                     "AND section.course_number = e.course_number " +
+                     "AND section.section# = e.section# " +
+                     "JOIN instructor i ON i.n# = section.instructor_n# " +
+                     "WHERE UPPER(s.n#) = ?";
 
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, studId.toUpperCase());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                ResultSetMetaData meta = rs.getMetaData();
+                int columns = meta.getColumnCount();
+
+                Vector<String> columnNames = new Vector<>();
+                for (int i = 1; i <= columns; i++) {
+                    columnNames.add(meta.getColumnName(i));
+                }
+
+                Vector<Vector<Object>> data = new Vector<>();
+                while (rs.next()) {
+                    Vector<Object> row = new Vector<>();
+                    for (int i = 1; i <= columns; i++) {
+                        row.add(rs.getObject(i));
+                    }
+                    data.add(row);
+                }
+
+                gradeReportTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error loading departments: " + e.getMessage());
+        }
+    }
+
+    
     private JPanel studentPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+    	JPanel panel = new JPanel(new BorderLayout());
 
-        JPanel inputPanel = new JPanel(new GridLayout(0, 4, 6, 6));
-        ssnField = new JTextField();
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 4, 6, 6));
+    	ssnField = new JTextField();
         fNameField = new JTextField();
         lNameField = new JTextField();
         midInitField = new JTextField();
         sexField = new JTextField();
-
+        
         nNumField = new JTextField();
         cityField = new JTextField();
         stateField = new JTextField();
         streetField = new JTextField();
         zipField = new JTextField();
-
+        
         permCityField = new JTextField();
         permStateField = new JTextField();
         permStreetField = new JTextField();
@@ -98,15 +185,15 @@ public class UniversityApp {
         degreeField = new JTextField();
         studentDegreeField = new JTextField();
         studClassField = new JTextField();
-
-
+        
+        
         SpinnerDateModel dateModel = new SpinnerDateModel();
         JSpinner birthDateSpinner = new JSpinner(dateModel);
         birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, "yyyy-MM-dd"));
-
-
+        
+        
         JButton addButton = new JButton("Add Student");
-
+        
         inputPanel.add(new JLabel("First Name:"));
         inputPanel.add(fNameField);
         inputPanel.add(new JLabel("Last Name:"));
@@ -153,16 +240,16 @@ public class UniversityApp {
         inputPanel.add(minorField);
         inputPanel.add(new JLabel("Class:"));
         inputPanel.add(studClassField);
-        inputPanel.add(new JLabel());
+        inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
-
+        
         panel.add(inputPanel, BorderLayout.NORTH);
-
+        
         studentTable = new JTable();
         panel.add(new JScrollPane(studentTable), BorderLayout.CENTER);
-
+        
         addButton.addActionListener(e -> {
-            String ssn = ssnField.getText().trim();
+        	String ssn = ssnField.getText().trim();
             String nNum = nNumField.getText().trim();
             String fName = fNameField.getText().trim();
             String lName = lNameField.getText().trim();
@@ -184,44 +271,44 @@ public class UniversityApp {
             String minor = minorField.getText().trim();
             String studClass = studClassField.getText().trim();
             String degree_program = degreeField.getText().trim();
-
+            
 
             if (minor.isEmpty()) {
-                //handling students without minors
-                try {
-                    //addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
-                    addStudents(ssn, nNum, fName, midInit, lName, birthDate, sex, permZip, permCity, permState, permStreet, zip, city, state, street, permPhone,
-                            currPhone, degree_program, studClass);
-                    addMajorIn(nNum, major);
-                    loadStudents();
-                }catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
-                }
-
+            	//handling students without minors
+            	try {
+            	//addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
+            	addStudents(ssn, nNum, fName, midInit, lName, birthDate, sex, permZip, permCity, permState, permStreet, zip, city, state, street, permPhone,
+                		currPhone, degree_program, studClass);
+            	addMajorIn(nNum, major);
+            	loadStudents();
+            	}catch (Exception ex) {
+            	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
+            	}
+               
             } else if(!minor.isEmpty()){
-                try {
-
-                    //addStudents(id, curAddress, fName, lName, birthDate, sex, city, state, street, zip, midInit, phone, studClass, degree);
-                    addMinorIn(nNum, minor);
-                    loadStudents();
-                }catch (Exception ex) {
-                    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
-                }
+            	try {
+           
+                	//addStudents(id, curAddress, fName, lName, birthDate, sex, city, state, street, zip, midInit, phone, studClass, degree);
+                	addMinorIn(nNum, minor);
+                	loadStudents();
+                	}catch (Exception ex) {
+                	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
+                	}
             }else {
                 JOptionPane.showMessageDialog(panel, "ID and Name are required.");
             }
         });
-
+        
         loadStudents();
-
+        
         return panel;
     }
 
-
+    
     private JPanel instructorPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+    	JPanel panel = new JPanel(new BorderLayout());
 
-        JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         fNameField = new JTextField();
         lNameField = new JTextField();
         ssnField = new JTextField();
@@ -235,14 +322,14 @@ public class UniversityApp {
         officeNumField = new JTextField();
         ageField = new JTextField();
         officePhoneField = new JTextField();
-
-
-
-
-
-
+        
+        
+        
+        
+        
+        
         JButton addButton = new JButton("Add Instructor");
-
+        
         inputPanel.add(new JLabel("First Name:"));
         inputPanel.add(fNameField);
         inputPanel.add(new JLabel("Last Name:"));
@@ -254,7 +341,7 @@ public class UniversityApp {
         inputPanel.add(new JLabel("Social Security Number:"));
         inputPanel.add(ssnField);
         inputPanel.add(new JLabel("Current Address:"));
-        inputPanel.add(new JLabel());
+        inputPanel.add(new JLabel()); 
         inputPanel.add(new JLabel("Street:"));
         inputPanel.add(streetField);
         inputPanel.add(new JLabel("City:"));
@@ -269,19 +356,19 @@ public class UniversityApp {
         inputPanel.add(officePhoneField);
         inputPanel.add(new JLabel("Associated Dept:"));
         inputPanel.add(degreeField);
-
-
-
-        inputPanel.add(new JLabel());
+        
+       
+       
+        inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
-
+        
         panel.add(inputPanel, BorderLayout.NORTH);
-
+        
         instructorTable = new JTable();
         panel.add(new JScrollPane(instructorTable), BorderLayout.CENTER);
-
+        
         addButton.addActionListener(e -> {
-            String id = nNumField.getText().trim();
+        	String id = nNumField.getText().trim();
             String sex = sexField.getText().trim();
             String fName = fNameField.getText().trim();
             String lName = lNameField.getText().trim();
@@ -294,22 +381,22 @@ public class UniversityApp {
             String city = cityField.getText().trim();
             String state = stateField.getText().trim();
             String zip = zipField.getText().trim();
-
+            
             String officeNumber = officeNumField.getText().trim();
 
             String dep = degreeField.getText().trim();
-
+            
             addInstructor(ssn, id, fName, lName, age, officeNumber, zip, city, state, street, dep, phone);
             loadInstructor();
 
         });
         loadInstructor();
-
+        
         return panel;
     }
-
-
-    //DONE
+    
+    
+//DONE
     private JPanel createDepartmentPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -331,7 +418,7 @@ public class UniversityApp {
         inputPanel.add(deptOfficeNumField);
         inputPanel.add(new JLabel("Department Phone:"));
         inputPanel.add(deptPhoneField);
-        inputPanel.add(new JLabel());
+        inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
 
         panel.add(inputPanel, BorderLayout.NORTH);
@@ -363,7 +450,7 @@ public class UniversityApp {
 
         return panel;
     }
-
+    
     //DONE
     private void addDepartment(String id, String name, String college, String officeNum, String phone) {
         String sql = "INSERT INTO department (Department_Name, Department_Code, College, Office#, Office_Phone) VALUES (?, ?, ?, ?, ?)";
@@ -381,9 +468,9 @@ public class UniversityApp {
         }
     }
 
-
+   
     //my functions to display data
-
+    
     //viewing departments doNE
     private void loadDepartments() {
         String sql = "SELECT * FROM department";
@@ -412,10 +499,10 @@ public class UniversityApp {
             JOptionPane.showMessageDialog(null, "Error loading departments: " + e.getMessage());
         }
     }
-
+    
     //function for loading students done
     private void loadStudents() {
-        String sql = """
+    	String sql = """
     	        SELECT s.N#, s.ssn, s.First_Name, s.Middle_Initial, s.Last_Name, s.BirthDate, s.sex,s.Permanent_Zip, s.Permanent_City, 
     s.Permanent_State, s.Permanent_Street, s.Current_Zip, s.Current_City, s.Current_State, s.Current_Street, s.Permanent_Phone, s.Current_Phone, 
     s.Degree_Program, s.Class, m.deptcode AS Major_Code, mi.deptcode AS Minor_Code
@@ -426,82 +513,82 @@ LEFT JOIN
 LEFT JOIN 
     minorin mi ON s.N# = mi.N#
     	        """;
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+    	try (Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
 
-            ResultSetMetaData meta = rs.getMetaData();
-            int columns = meta.getColumnCount();
+               ResultSetMetaData meta = rs.getMetaData();
+               int columns = meta.getColumnCount();
 
-            Vector<String> columnNames = new Vector<>();
-            for (int i = 1; i <= columns; i++) {
-                columnNames.add(meta.getColumnName(i));
-            }
+               Vector<String> columnNames = new Vector<>();
+               for (int i = 1; i <= columns; i++) {
+                   columnNames.add(meta.getColumnName(i));
+               }
 
-            Vector<Vector<Object>> data = new Vector<>();
-            while (rs.next()) {
-                Vector<Object> row = new Vector<>();
-                for (int i = 1; i <= columns; i++) {
-                    row.add(rs.getObject(i));
-                }
-                data.add(row);
-            }
+               Vector<Vector<Object>> data = new Vector<>();
+               while (rs.next()) {
+                   Vector<Object> row = new Vector<>();
+                   for (int i = 1; i <= columns; i++) {
+                       row.add(rs.getObject(i));
+                   }
+                   data.add(row);
+               }
 
-            studentTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error loading students: " + e.getMessage());
-        }
-
+               studentTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+           } catch (SQLException e) {
+               JOptionPane.showMessageDialog(null, "Error loading students: " + e.getMessage());
+           }
+    	
     }
 
     // Placeholder methods
     private void addStudents(String ssn, String nNum, String fName, String midInit, String lName, Date birthDate, String sex,
-                             String permZip, String permCity, String permState, String permStreet, String currZip, String currCity, String currState,
-                             String currStreet, String permPhone, String currPhone, String degree_program, String studClass) {
+    	    String permZip, String permCity, String permState, String permStreet, String currZip, String currCity, String currState,
+    	    String currStreet, String permPhone, String currPhone, String degree_program, String studClass) {
 
-        String sql = "INSERT INTO student (SSN, N#, First_Name, Middle_Initial, Last_Name, Birthdate, sex, Permanent_Zip"
-                + ", Permanent_city, permanent_state, permanent_street, current_zip, current_city, current_state,"
-                + "current_street, permanent_phone, current_phone, degree_program, class) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, ssn);
-            stmt.setString(2, nNum);
-            stmt.setString(3, fName);
-            stmt.setString(4, midInit);
-            stmt.setString(5, lName);
-            stmt.setDate(6, new java.sql.Date(birthDate.getTime()));
-            stmt.setString(7, sex);
-            stmt.setString(8, permZip);
-            stmt.setString(9, permCity);
-            stmt.setString(10, permState);
-            stmt.setString(11, permStreet);
-            stmt.setString(12, currZip);
-            stmt.setString(13, currCity);
-            stmt.setString(14, currState);
-            stmt.setString(15, currStreet);
-            stmt.setString(16, permPhone);
-            stmt.setString(17, currPhone);  // Add this line to set the 17th parameter
-            stmt.setString(18, degree_program);
-            stmt.setString(19, studClass);
+    	    String sql = "INSERT INTO student (SSN, N#, First_Name, Middle_Initial, Last_Name, Birthdate, sex, Permanent_Zip"
+    	            + ", Permanent_city, permanent_state, permanent_street, current_zip, current_city, current_state,"
+    	            + "current_street, permanent_phone, current_phone, degree_program, class) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    	        stmt.setString(1, ssn);
+    	        stmt.setString(2, nNum);
+    	        stmt.setString(3, fName);
+    	        stmt.setString(4, midInit);
+    	        stmt.setString(5, lName);
+    	        stmt.setDate(6, new java.sql.Date(birthDate.getTime()));
+    	        stmt.setString(7, sex);
+    	        stmt.setString(8, permZip);
+    	        stmt.setString(9, permCity);
+    	        stmt.setString(10, permState);
+    	        stmt.setString(11, permStreet);
+    	        stmt.setString(12, currZip);
+    	        stmt.setString(13, currCity);
+    	        stmt.setString(14, currState);
+    	        stmt.setString(15, currStreet);
+    	        stmt.setString(16, permPhone);
+    	        stmt.setString(17, currPhone);  // Add this line to set the 17th parameter
+    	        stmt.setString(18, degree_program);
+    	        stmt.setString(19, studClass);
 
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Student added!");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
-        }
-    }
-
+    	        stmt.executeUpdate();
+    	        JOptionPane.showMessageDialog(null, "Student added!");
+    	    } catch (SQLException e) {
+    	        JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
+    	    }
+    	}
+    
     private void addMajorIn(String id, String depId) {
-        String sql = "INSERT INTO majorIn (N#, deptCode) VALUES (?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, id);
-            stmt.setString(2, depId);
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Student major added!");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
-        }
+    	 String sql = "INSERT INTO majorIn (N#, deptCode) VALUES (?, ?)";
+         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+             stmt.setString(1, id);
+             stmt.setString(2, depId);
+             stmt.executeUpdate();
+             JOptionPane.showMessageDialog(null, "Student major added!");
+         } catch (SQLException e) {
+             JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
+         }
     }
     private void addMinorIn(String id, String depId) {
-        String sql = "INSERT INTO minorIn (N#, deptCode) VALUES (?, ?)";
+   	 String sql = "INSERT INTO minorIn (N#, deptCode) VALUES (?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
             stmt.setString(2, depId);
@@ -510,67 +597,67 @@ LEFT JOIN
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error adding student: " + e.getMessage());
         }
-    }
+   }
 
     private void addInstructor(String ssn, String nNum, String fName, String lName, int age, String officeNumber, String zip, String city, String state, String street, String dep, String phone) {
-
-        String sql = "INSERT INTO INSTRUCTOR (SSN, N#, First_Name, Last_Name, Age, office#, zip, city, state, street, associated_dept, office_phone) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+    	String sql = "INSERT INTO INSTRUCTOR (SSN, N#, First_Name, Last_Name, Age, office#, zip, city, state, street, associated_dept, office_phone) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, ssn);
             stmt.setString(2, nNum);
             stmt.setString(3, fName);
             stmt.setString(4, lName);
             stmt.setInt(5, age);
-            stmt.setString(6, officeNumber);
+            stmt.setString(6, officeNumber); 
             stmt.setString(7, zip);
             stmt.setString(8, city);
             stmt.setString(9, state);
             stmt.setString(10, street);
             stmt.setString(11, dep);
-            stmt.setString(12, phone);
+            stmt.setString(12, phone); 
 
             stmt.executeUpdate();
             JOptionPane.showMessageDialog(null, "Instructor added!");
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error adding instructor: " + e.getMessage());
         }
-
+    	
     }
-
+    
     private void loadInstructor() {
-        String sql = """
+    	String sql = """
     	        SELECT *
     	        From instructor
     	        """;
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+    	try (Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
 
-            ResultSetMetaData meta = rs.getMetaData();
-            int columns = meta.getColumnCount();
+               ResultSetMetaData meta = rs.getMetaData();
+               int columns = meta.getColumnCount();
 
-            Vector<String> columnNames = new Vector<>();
-            for (int i = 1; i <= columns; i++) {
-                columnNames.add(meta.getColumnName(i));
-            }
+               Vector<String> columnNames = new Vector<>();
+               for (int i = 1; i <= columns; i++) {
+                   columnNames.add(meta.getColumnName(i));
+               }
 
-            Vector<Vector<Object>> data = new Vector<>();
-            while (rs.next()) {
-                Vector<Object> row = new Vector<>();
-                for (int i = 1; i <= columns; i++) {
-                    row.add(rs.getObject(i));
-                }
-                data.add(row);
-            }
+               Vector<Vector<Object>> data = new Vector<>();
+               while (rs.next()) {
+                   Vector<Object> row = new Vector<>();
+                   for (int i = 1; i <= columns; i++) {
+                       row.add(rs.getObject(i));
+                   }
+                   data.add(row);
+               }
 
-            instructorTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error loading students: " + e.getMessage());
-        }
-
+               instructorTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+           } catch (SQLException e) {
+               JOptionPane.showMessageDialog(null, "Error loading students: " + e.getMessage());
+           }
+    	
     }
 
     private JPanel coursePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+    	JPanel panel = new JPanel(new BorderLayout());
 
         JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         JTextField courseIdField = new JTextField();
@@ -592,28 +679,28 @@ LEFT JOIN
         inputPanel.add(semesterHoursField);
         inputPanel.add(new JLabel("Department Offered By:"));
         inputPanel.add(deptIdField);
-        inputPanel.add(new JLabel());
+        inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
-
+        
         inputPanel.add(new JLabel("Search Courses"));
-        inputPanel.add(new JLabel());
-
+        inputPanel.add(new JLabel()); 
+        
         inputPanel.add(new JLabel("Department Id:"));
         inputPanel.add(searchIdField);
-
-        inputPanel.add(new JLabel());
+        
+        inputPanel.add(new JLabel()); 
         inputPanel.add(searchButton);
-
+        
         panel.add(inputPanel, BorderLayout.NORTH);
 
         courseTable = new JTable();
         panel.add(new JScrollPane(courseTable), BorderLayout.CENTER);
         searchButton.addActionListener(e -> {
-            String searchId = searchIdField.getText().trim();
-
-            searchCoursesByDept(searchId);
-            searchIdField.setText("");
-
+        	String searchId = searchIdField.getText().trim();
+        	
+        	searchCoursesByDept(searchId);
+        	searchIdField.setText("");
+        	
         });
         addButton.addActionListener(e -> {
             String deptId = deptIdField.getText().trim();
@@ -630,22 +717,22 @@ LEFT JOIN
                 semesterHoursField.setText("");
                 deptIdField.setText("");;
                 loadDepartments();
-
+                
             } else {
                 JOptionPane.showMessageDialog(panel, "ID and Name are required.");
             }
         });
 
-
+        
 
         return panel;
     }
-
+    
     private void addCourse(String courseNum, String deptId, String name, String description, int hours) {
-
-        String sql = "INSERT INTO course (course_number, department_offering, name, description, semester_hours) values (?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, courseNum);
+    	 
+    	String sql = "INSERT INTO course (course_number, department_offering, name, description, semester_hours) values (?, ?, ?, ?, ?)";
+    	try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    		stmt.setString(1, courseNum);
             stmt.setString(2, deptId);
             stmt.setString(3, name);
             stmt.setString(4, description);
@@ -656,10 +743,10 @@ LEFT JOIN
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error adding course: " + e.getMessage());
         }
-
+    	
     }
-
-
+    
+    
     private void searchCoursesByDept(String deptId) {
         String sql = """
             SELECT *
@@ -694,19 +781,521 @@ LEFT JOIN
         }
     }
 
-    private void searchCourseByInstructor() {
+    private JPanel sectionPanel() {
+		JPanel sPanel = new JPanel(new GridBagLayout());
+		
+		GridBagConstraints sectionConstraints = new GridBagConstraints();
+		
+		sectionConstraints.ipady = 7;
+		sectionConstraints.weightx = 2.0;
+		
+		//------------Row 1---------
+		JLabel instructorN = new JLabel("Instructor");
+		JTextField inputInstructor = new JTextField(20);
+		
+		sectionConstraints.gridx = 0;
+		sectionConstraints.gridy = 0;
+		sectionConstraints.fill = GridBagConstraints.HORIZONTAL;
+		sPanel.add(instructorN, sectionConstraints);
+		sectionConstraints.gridx = 1;
+		sPanel.add(inputInstructor, sectionConstraints);
+		
+		//------------Row 2---------
+		JLabel sectionID = new JLabel("Section");
+		JTextField inputSectionID = new JTextField(20);
+		
+		sectionConstraints.gridx = 0;
+		sectionConstraints.gridy = 1;
+		sPanel.add(sectionID, sectionConstraints);
+		sectionConstraints.gridx = 1;
+		sPanel.add(inputSectionID, sectionConstraints);
+		
+		//------------Row 3---------
+		
+		JLabel courseNumber = new JLabel("CourseNumber");
+		JTextField inputCourseNumber = new JTextField(20);
+		
+		sectionConstraints.gridx = 0;
+		sectionConstraints.gridy = 2;
+		sPanel.add(courseNumber, sectionConstraints);
+		sectionConstraints.gridx = 1;
+		sPanel.add(inputCourseNumber, sectionConstraints);
+		
+		
+		//------------Row 4---------
+		JLabel Semester = new JLabel("Semester");
+		JTextField inputSemester = new JTextField(20);
+		
+		sectionConstraints.gridx = 0;
+		sectionConstraints.gridy = 3;
+		sPanel.add(Semester, sectionConstraints);
+		sectionConstraints.gridx = 1;
+		sPanel.add(inputSemester, sectionConstraints);
+		
+		//------------Row 5---------
+		JLabel Year = new JLabel("Year");
+		JTextField inputYear = new JTextField(20);
+		
+		sectionConstraints.gridx = 0;
+		sectionConstraints.gridy = 4;
+		sPanel.add(Year, sectionConstraints);
+		sectionConstraints.gridx = 1;
+		sPanel.add(inputYear, sectionConstraints);
+		
+		//------------Row 6 Aka just Buttons---------
+		JButton submitInfo = new JButton("Add Section");
+		
+		sectionConstraints.gridx = 0;
+		sectionConstraints.gridy = 5;
+		
+		sectionConstraints.gridwidth = 2;
+		sPanel.add(submitInfo, sectionConstraints);
+		
+		
+		
+		
+		//------------Row 7 Aka just display---------
+		sectionConstraints.gridy = 7;
+		sectionConstraints.gridwidth = 2;
+		
+		sectionConstraints.weightx = 2.0;
+		sectionConstraints.weighty = 2.0;
+		sectionConstraints.gridheight = GridBagConstraints.REMAINDER;
+		sectionConstraints.fill = GridBagConstraints.BOTH;
+		
+		
+		JTable displayInfo = new JTable();
+		displaySections(displayInfo);
+		sPanel.add(new JScrollPane(displayInfo), sectionConstraints);
+		
+		//---------------Add ActionListener to Button
+		submitInfo.addActionListener(new ActionListener() {
+				
+			public void actionPerformed(ActionEvent e) { 
+		
+            // Action to perform when the button is clicked
+            System.out.println("Submit section button Clicked!");
+            
+            
+            String instructor = inputInstructor.getText();
+            String sectionID = inputSectionID.getText();
+            String courseNum = inputCourseNumber.getText();
+            String semester = inputSemester.getText();
+            String year = inputYear.getText();
+            
+            
+            if( instructor.isEmpty() ) {
+            	JOptionPane.showMessageDialog(new JDialog(),"Instructor N number  are required.");
+            	
+            }else if(sectionID.isEmpty()) {
+            	JOptionPane.showMessageDialog(new JDialog(),"Section number are required.");
+            	
+            }else if(courseNum.isEmpty()) {
+            	JOptionPane.showMessageDialog(new JDialog(),"Course number are required.");
+            	
+            }else if(semester.isEmpty()) {
+            	JOptionPane.showMessageDialog(new JDialog(),"Semester are required.");
+            	
+            }else if(year.isEmpty()) {
+            	JOptionPane.showMessageDialog(new JDialog(),"Year are required.");
+            	
+            }else {
+            	addSections(instructor, sectionID, courseNum, semester, year);
+            	displaySections(displayInfo);
+            }
+            
+            
+            displaySections(displayInfo);
+            
+            
+			}//End of actionPerformed
+		}//End function for actionlistener of submitInfo
+		
+		);//End of addActionListener
+		
+		
+		
+		
+		
+		return sPanel;
+	}
 
-    }
+    private void addSections(String instructN, String sectionID, String courseNum, String Semester, String  Year) {
+        
+    	String insert = "INSERT INTO SECTION(INSTRUCTOR_N#, SECTION#, COURSE_NUMBER, SEMESTER, YEAR)VALUES(?,?,?,?,?)";
+    	
+    	try {
+			PreparedStatement statement = conn.prepareStatement(insert);
+			statement.setString(1, instructN);
+			statement.setString(2, sectionID);
+			statement.setString(3, courseNum);
+			statement.setString(4, Semester);
+			statement.setString(5, Year);
+			
+			statement.execute();
+			
+			} catch (SQLException e) {
+				
+				// TODO Auto-generated catch block
+			e.printStackTrace();
+			}//End of try catch
+    }//End of addSections
 
-    private void addSections() {
+    private void displaySections(JTable display) {
+    	String getSection = "SELECT * FROM SECTION";
+    	
+    	try {
+    		//Prepare statement foe execution
+			PreparedStatement statement = conn.prepareStatement(getSection);
+			//Store result of executed statement
+			ResultSet result = statement.executeQuery();
+			
+			//Store meta data of result such as number of columns 
+			ResultSetMetaData meta = result.getMetaData();
+			int columnCount = meta.getColumnCount();
 
-    }
+			//Vector for Table Header
+			Vector<String> columnHeaders = new Vector<String>();
+			//Loop to retrive column names and store in Vector columnHeaders
+			for(int a = 1; a <= columnCount; a++) {
+				
+				//System.out.println(meta.getColumnName(a));
+				columnHeaders.add(meta.getColumnName(a));			
+			}//End of for loop
+			
+			//Vector for Table data
+			Vector<Vector<Object>> data = new Vector<>();
+			while (result.next()) {
+				
+			    Vector<Object> row = new Vector<>();
+			    for (int i = 1; i <= columnCount; i++) {
+			        row.add(result.getObject(i));
+			    }//End of for loop
+			    data.add(row);
+			    
+			}//End of while loop
+			
+			display.setModel(new DefaultTableModel(data, columnHeaders));
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}//End of try catch
+    	
+    	
+   
+    }//End of displaySections
+    
+  //-------------------------------------Assign Student  Tab and Functionality---------------------------------------
+    
+    private JPanel assignStudentPanel() {
+    	JPanel aPanel = new JPanel(new GridBagLayout());
+    	
+    	GridBagConstraints aC = new GridBagConstraints();
+    	
+    	aC.fill = GridBagConstraints.HORIZONTAL;
+    	aC.weightx = 2.0;
+    	aC.ipady = 7;
+    	
+    	//----------------Row 1---------------
+    	
+    	aC.gridx = 0;
+    	aC.gridy = 0;
+    	JLabel sectionL = new JLabel("Section:");
+    	aPanel.add(sectionL, aC);
+    	aC.gridx = 1;
+    	JTextField sectionID = new JTextField();
+    	aPanel.add(sectionID, aC);
+    	
+    	//----------------Row 2---------------
+    	
+    	aC.gridx = 0;
+    	aC.gridy = 1;
+    	
+    	JLabel courseL = new JLabel("Course Number:");
+    	aPanel.add(courseL, aC);
+    	aC.gridx = 1;
+    	JTextField courseID = new JTextField();
+    	aPanel.add(courseID, aC);
+    	
+    	//----------------Row 3---------------
+    	
+    	aC.gridx = 0;
+    	aC.gridy = 2;
+    	
+    	JLabel semesterL = new JLabel("Semester:");
+    	aPanel.add(semesterL, aC);
+    	aC.gridx = 1;
+    	JTextField semesterInput = new JTextField();
+    	aPanel.add(semesterInput, aC);
+    	
+    	
+    	//----------------Row 4---------------
+    	
+    	aC.gridx = 0;
+    	aC.gridy = 3;
+    	JLabel yearL = new JLabel("Year:");
+    	aPanel.add(yearL, aC);
+    	aC.gridx = 1;
+    	JTextField yearInput = new JTextField();
+    	aPanel.add(yearInput, aC);
+    	
+    	
+    	//----------------Row 5---------------
+    	
+    	aC.gridx = 0;
+    	aC.gridy = 4;
+    	JLabel nNumberL = new JLabel("N Number:");
+    	aPanel.add(nNumberL, aC);
+    	aC.gridx = 1;
+    	JTextField nNumber = new JTextField();
+    	aPanel.add(nNumber, aC);
+    	
+    	
+    	//----------------Row 6---------------
+    	
+    	aC.gridx = 0;
+    	aC.gridy = 5;
+    	JLabel gradeL = new JLabel("Grade:");
+    	aPanel.add(gradeL, aC);
+    	aC.gridx = 1;
+    	JTextField gradeInput = new JTextField();
+    	aPanel.add(gradeInput, aC);
+    	
 
-    private void addStudentToSection() {
+    	//-------------Assign Student Button + Change Grade Button-------------
+    	aC.gridx = 0;
+    	aC.gridy = 6;
+    	aC.gridwidth = 2;
+    	JButton assignStudent = new JButton("Assign Student to Section");
+    	aPanel.add(assignStudent, aC);
+    	
+    	aC.gridy = 7;
+    	aC.gridwidth = 2;
+    	JButton changeGrade = new JButton("Change Student Grade");
+    	aPanel.add(changeGrade, aC);
+    	
+    	//-------------Display Currently Enrolled table-------------
+    	
+    	aC.gridy = 8;
+    	aC.weightx = 2;
+    	aC.weighty = 2;
+    	aC.gridheight = GridBagConstraints.REMAINDER;
+    	aC.fill = GridBagConstraints.BOTH;
+    	JTable display = new JTable();
+    	
+    	displayEnrolled(display);
+    	
+    	aPanel.add(new JScrollPane(display), aC);
+    	
+    	
+		assignStudent.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) { 
+				System.out.println("Assign Student Button Pressed");
+				
+				String section = sectionID.getText();
+				String courseNum = courseID.getText();
+				String semester = semesterInput.getText();
+				String year = yearInput.getText();
+				String nNum = nNumber.getText();
+				String grade = gradeInput.getText();
+				
+				if( section.isEmpty() ) {
+					
+					JOptionPane.showMessageDialog(new JDialog(),"Section Number is required.");
+				}else if( courseNum.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Course Number is required.");
+				}else if( semester.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Semester is required.");
+				}else if( year.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Year is required.");
+				}else if( nNum.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"N Numbers are required.");
+				}else if( !grade.isEmpty() ){
+					addStudentToSection(section,courseNum, semester, year,grade, nNum);
+					displayEnrolled(display);
+					
+				}else{
+					addStudentToSection(section,courseNum, semester, year, nNum);
+					displayEnrolled(display);
+					
+				}//End of if else statement
+				
+			
+			}//End of actionPerformed
+						
+		});//End of addActionListener for assignStudent;
+		
+		changeGrade.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) { 
+				
+				System.out.println("Change Grade Button Clicked");
+				String section = sectionID.getText();
+				String courseNum = courseID.getText();
+				String semester = semesterInput.getText();
+				String year = yearInput.getText();
+				String nNum = nNumber.getText();
+				String grade = gradeInput.getText();
+				
+				if( section.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Section Number is required.");
+				}else if( courseNum.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Course Number is required.");
+				}else if( semester.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Semester is required.");
+				}else if( year.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"Year is required.");
+				}else if( nNum.isEmpty() ) {
+					JOptionPane.showMessageDialog(new JDialog(),"N Numbers are required.");
+				}else if( !grade.isEmpty() ){
+					display.revalidate();
+					display.repaint();
 
-    }
+					assignGrade(section, courseNum, semester,year, grade, nNum);
+					displayEnrolled(display);
+				}else{
+					JOptionPane.showMessageDialog(new JDialog(),"Grade is required.");
+				
+				}//End of if else
+				
+			}//End of actionPerformed
+			
+		});//End of addActionListener for changeGrade
+    	
+    	return aPanel;
+    }//End of assignStudentPanel
+    
+    //AKA enroll student into course
+    private void addStudentToSection(String sectionNum, String courseNum, String semester, String year, String NNumber) {
+      
+    	//String to insert values into ENROLLED_IN table
+    	String insert = "INSERT INTO ENROLLED_IN (SECTION#, COURSE_NUMBER, SEMESTER, YEAR, N#) VALUES (?, ?, ?, ?, ?)";
+    	
+    	//Insert the values given then add to table
+    	try {
+			PreparedStatement state = conn.prepareStatement(insert);
+			state.setString(1,sectionNum);
+			state.setString(2,courseNum);
+			state.setString(3,semester);
+			state.setString(4,year);
+			state.setString(5,NNumber);
+			
+			state.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(new JDialog(),"Ensure that Section#, Course#, N# all exist.");
+			
+		}//End of try catch
+    	
+    }//End of addStudentToSection
+    
+    private void addStudentToSection(String sectionNum, String courseNum, String semester, String year,String Grade, String NNumber) {
+        
+    	//String to insert values into ENROLLED_IN table
+    	String insert = "INSERT INTO ENROLLED_IN (SECTION#, COURSE_NUMBER, SEMESTER, YEAR, GRADE, N#) VALUES (?, ?, ?, ?, ?, ?)";
+    	
+    	//Insert the values given then add to table
+    	try {
+			PreparedStatement state = conn.prepareStatement(insert);
+			state.setString(1,sectionNum);
+			state.setString(2,courseNum);
+			state.setString(3,semester);
+			state.setString(4,year);
+			state.setString(5,Grade);
+			state.setString(6,NNumber);
+			
+			state.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(new JDialog(),"Ensure that Section#, Course#, N# all exist.");
+			
+		}//End of try catch
+    	
+    }//End of addStudentToSection with Grade
+    
+    
+    private void assignGrade(String sectionNum, String courseNum, String semester, String year,String Grade, String NNumber) {
+        
+    	String update = "UPDATE ENROLLED_IN SET GRADE = ? WHERE SECTION# = ? AND COURSE_NUMBER = ? AND SEMESTER = ? AND YEAR = ? AND N# = ?";
+    	
+    	try {
+			PreparedStatement state = conn.prepareStatement(update);
+			state.setString(1, Grade);
+			state.setString(2, sectionNum);
+			state.setString(3, courseNum);
+			state.setString(4, semester);
+			state.setString(5, year);
+			state.setString(6, NNumber);
+			
+			
+			state.executeUpdate();
+			
+			String commit = "COMMIT";
+			state = conn.prepareStatement(commit);
+			state.executeQuery();
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}//End of try catch
+    	
+    	
+    }//End of AssignGrade
+    
+    
+    private void displayEnrolled(JTable display) {
+    	System.out.println("Enroll display");
+    	String getEnrolled = "SELECT * FROM ENROLLED_IN";
+    	
+    	try {
+    		//Prepare statement foe execution
+			PreparedStatement statement = conn.prepareStatement(getEnrolled);
+			//Store result of executed statement
+			ResultSet result = statement.executeQuery();
+			
+			//Store meta data of result such as number of columns 
+			ResultSetMetaData meta = result.getMetaData();
+			int columnCount = meta.getColumnCount();
 
-    private void AssignGrade() {
+			//Vector for Table Header
+			Vector<String> columnHeaders = new Vector<String>();
+			//Loop to retrive column names and store in Vector columnHeaders
+			for(int a = 1; a <= columnCount; a++) {
+				
+				//System.out.println(meta.getColumnName(a));
+				columnHeaders.add(meta.getColumnName(a));			
+			}//End of for loop
+			
+			//Vector for Table data
+			Vector<Vector<Object>> data = new Vector<>();
+			while (result.next()) {
+				
+			    Vector<Object> row = new Vector<>();
+			    for (int i = 1; i <= columnCount; i++) {
+			        row.add(result.getObject(i));
+			    }//End of for loop
+			    data.add(row);
+			    
+			}//End of while loop
+			
+			display.setModel(new DefaultTableModel(data, columnHeaders));
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}//End of try catch
+    	
+    	
+   
+    }//End of displayEnrolled for assignStudentPanel
+    
+    //----------------------------------------Student Grades  && Search Tab and Functionality------------------------------
 
-    }
 }
