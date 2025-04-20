@@ -3,11 +3,12 @@ package nothing;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
+import java.util.*;
 import java.util.Date;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
-import java.util.Vector;
 
 public class UniversityApp {
 
@@ -776,8 +777,92 @@ LEFT JOIN
     
     //-------------------------------------Search Course Tab and Functionality--------------------------------
     
+    private JPanel searchPanel() {
+    	JPanel sPanel = new JPanel(new GridBagLayout());
+    	
+    	GridBagConstraints sC = new GridBagConstraints();
+    	
+    	sC.fill = GridBagConstraints.HORIZONTAL;
+    	sC.ipady = 7;
+    	
+    	//----------------Row1----------------
+    	sC.gridx = 0;
+    	sC.gridy = 0;
+    	
+    	JLabel courseD = new JLabel("Search Course by Department:");
+    	sPanel.add(courseD,sC);
+    	sC.gridx = 1;
+    	JTextField courseDept = new JTextField(20);
+    	sPanel.add(courseDept, sC);
+    	
+    	//----------------Row2----------------
+    	sC.gridx = 0;
+    	sC.gridy = 1;
+    	
+    	JLabel courseI = new JLabel("Search Course by Instructor:");
+    	sPanel.add(courseI, sC);
+    	sC.gridx = 1;
+    	JTextField courseInst = new JTextField(20);
+    	sPanel.add(courseInst, sC);
+    	
+    	//-----------------Row3-------------
+    	sC.gridx = 0;
+    	sC.gridy = 2;
+    	sC.gridwidth = 1;
+    	
+    	JButton reset = new JButton("Reset");
+    	sPanel.add(reset, sC);
+    	
+    	sC.gridx = 1;
+    	JButton search = new JButton("Search");
+    	sPanel.add(search, sC);
     
-    private void searchCoursesByDept(String deptId) {
+    	//---------------Display Result----------------
+    	sC.gridx = 0;
+    	sC.gridy = 3;
+    	sC.gridwidth = 2;
+    	sC.weightx = 1.0;
+    	sC.weighty = 1.0;
+    	sC.gridheight = GridBagConstraints.REMAINDER;
+    	JTable display = new JTable();
+    	loadCourseInfo(display);
+    	sPanel.add(new JScrollPane(display), sC);
+    	
+    	//-----------Button Functionality--------------
+    	
+    	search.addActionListener(new ActionListener() {
+    			
+    			public void actionPerformed(ActionEvent e) {
+    				
+    				String dept = courseDept.getText();
+    				String instuctor = courseInst.getText();
+    				
+    				
+    				if( !dept.isEmpty() ) {
+    					searchCoursesByDept(display,dept);
+    				}else if( !instuctor.isEmpty() ) {
+    					searchCourseByInstructor(display,instuctor);
+    				}
+    				
+    			}//End of actionPerformed
+    	}//End of outer wrap
+    			);//End of addActionListener to search button
+    	
+    	reset.addActionListener(new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				
+				loadCourseInfo(display);
+			
+			}//End of actionPerformed
+	}//End of outer wrap
+			);//End of addActionListener to reset button
+	
+    	
+    	return sPanel;
+    }
+    
+    private void searchCoursesByDept(JTable display,String deptId) {
         String sql = """
             SELECT *
             FROM course
@@ -804,14 +889,14 @@ LEFT JOIN
                     data.add(row);
                 }
 
-                courseTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+                display.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading courses: " + e.getMessage());
         }
     }
 
-    private void searchCourseByInstructor() {
+    private void searchCourseByInstructor(JTable display, String input) {
         
     }
     
@@ -936,9 +1021,11 @@ LEFT JOIN
             	JOptionPane.showMessageDialog(new JDialog(),"Year are required.");
             	
             }else {
+            	
+            	
             	addSections(instructor, sectionID, courseNum, semester, year);
             	displaySections(displayInfo);
-            }
+            }//End of outer if else
             
             
             displaySections(displayInfo);
@@ -1150,12 +1237,22 @@ LEFT JOIN
 				}else if( nNum.isEmpty() ) {
 					JOptionPane.showMessageDialog(new JDialog(),"N Numbers are required.");
 				}else if( !grade.isEmpty() ){
-					addStudentToSection(section,courseNum, semester, year,grade, nNum);
-					displayEnrolled(display);
+					
+					if(  checkPreReq(section,courseNum, nNum)   ) {
+						
+						addStudentToSection(section,courseNum, semester, year,grade, nNum);
+						displayEnrolled(display);
+					};
+					
 					
 				}else{
-					addStudentToSection(section,courseNum, semester, year, nNum);
-					displayEnrolled(display);
+					if(   checkPreReq(section,courseNum, nNum)  ) {
+						
+						
+						addStudentToSection(section,courseNum, semester, year, nNum);
+						displayEnrolled(display);
+					};
+					
 					
 				}//End of if else statement
 				
@@ -1203,6 +1300,173 @@ LEFT JOIN
     	
     	return aPanel;
     }//End of assignStudentPanel
+    
+    private boolean checkPreReq(String sectionID,String course, String nNumber) {
+    	
+    	//FIND PREREQ OF COURSE
+    	String findPreReq = "SELECT PREREQUISITE_COURSES FROM COURSE_PREREQUISITES WHERE COURSE_NUMBER = ?";
+    	// Here to store result
+    	ResultSet coursePreReq; 
+    	//Will determine if student meet prereq are not assume that they do by default
+    	boolean meetRequirement = true;
+    	
+    	
+    	try {
+    		//Statement to find prereq of enter course
+			PreparedStatement state = conn.prepareStatement(findPreReq);
+			state.setString(1, course);
+			
+			//End of 
+			coursePreReq = state.executeQuery();
+			
+			//If there any input continue
+			if( coursePreReq.next() ) {
+				
+				//Find index of column that store the prequisite
+				int index = coursePreReq.findColumn("PREREQUISITE_COURSES");
+				//Get the course number of the prerequisite
+				String output = coursePreReq.getNString(index);
+				
+				//Solely testing
+				System.out.println("Index is: " + index + " Output is: " + output);
+			//-----------------------------------Found PreReq-----------------------------	
+			
+				
+			
+				//Need to search if student is passed the prerequisite
+				String checkEnrollment = "SELECT * FROM ENROLLED_IN WHERE N# = ? AND COURSE_NUMBER = ?";
+				state = conn.prepareStatement(checkEnrollment);
+								
+				state.setString(1, nNumber);
+				state.setString(2, output );
+				
+				//Inner  resultSet to find enrollment of student courses that match the prereq
+				ResultSet studentInPreReq = state.executeQuery();
+				
+				//Need to search for the section that student is trying to enroll in
+				String checkSection = "SELECT * FROM SECTION WHERE SECTION# = ?";
+				state = conn.prepareStatement(checkSection);
+								
+				state.setString(1, sectionID);
+								
+				//Inner  resultSet to find section info that student wishes to enroll in
+				ResultSet attemptedSection = state.executeQuery();
+				attemptedSection.next();
+				
+				
+			
+				//If there is a value check it elsewise they never enrolled in the prereq and can't enroll in course
+				if(studentInPreReq.next()) {
+					
+					//Get year of prereq
+					int indexOfYear = studentInPreReq.findColumn("YEAR");
+					String yearPreReq = studentInPreReq.getNString(indexOfYear);
+					
+					//Get year of attempted section
+					int indexYearSection = attemptedSection.findColumn("YEAR");
+					String yearSection = attemptedSection.getNString(indexYearSection);
+					
+					//Get semester of prereq
+					int indexOfSemester = studentInPreReq.findColumn("SEMESTER");
+					String semesterPreReq = studentInPreReq.getNString(indexOfSemester);
+					
+					//Get semester of attemepted section
+					int indexSemesterSection = attemptedSection.findColumn("SEMESTER");
+					String semesterSection = attemptedSection.getNString(indexSemesterSection);
+					
+					//Get grade of prereq
+					int indexOfGrade = studentInPreReq.findColumn("GRADE");
+					String gradePreReq = studentInPreReq.getNString(indexOfGrade);
+					
+					
+					//If prereq year is before attempted Section all good
+					if(Integer.parseInt(yearPreReq) < Integer.parseInt(yearSection)) {
+						
+						System.out.println("All clear");
+						
+						if( gradePreReq.equals("D") || gradePreReq.equals("F") || gradePreReq == null  ){
+					    	
+					    	JOptionPane.showMessageDialog(new JDialog(), "Can't enroll in Course if you did not pass the PreReq.");
+						    return meetRequirement = false;
+					    	
+					    }else {
+					    	System.out.println("All good — prerequisite was taken before and passed.");
+					    	return meetRequirement = true;
+					    }//End of if else that checks passing graade
+					
+						//If prereq year is same year as attempted section check semester
+					}else if (Integer.parseInt(yearPreReq) == Integer.parseInt(yearSection)) {
+						
+						List<String> semesterOrder = Arrays.asList("Spring", "Summer", "Fall");
+
+						int prereqIndex = semesterOrder.indexOf(semesterPreReq);
+						int sectionIndex = semesterOrder.indexOf(semesterSection);
+
+						// Invalid comparison (just in case values are misspelled)
+						if (prereqIndex == -1 || sectionIndex == -1) {
+						    JOptionPane.showMessageDialog(new JDialog(), "Invalid semester value entered.");
+						    return meetRequirement = false;
+						}
+
+						// Prereq is in the same semester → Not allowed
+						if (prereqIndex == sectionIndex) {
+						    JOptionPane.showMessageDialog(new JDialog(), "Can't enroll in PreReq during the same Semester as the Course.");
+						    return meetRequirement = false;
+
+						// Prereq is **after** the course semester → Not allowed
+						} else if (prereqIndex > sectionIndex) {
+						    JOptionPane.showMessageDialog(new JDialog(), "Can't enroll in PreReq after the Course semester.");
+						    return meetRequirement = false;
+
+						// Prereq is **before** → Allowed
+						} else {
+						    System.out.println("All good — prerequisite was taken before.");
+						    
+						    if( gradePreReq.equals("D") || gradePreReq.equals("F") || gradePreReq == null  ){
+						    	
+						    	JOptionPane.showMessageDialog(new JDialog(), "Can't enroll in Course if you did not pass the PreReq.");
+							    return meetRequirement = false;
+						    	
+						    }else {
+						    	
+						    	System.out.println("All good — prerequisite was taken before and passed.");
+						    	return meetRequirement = true;
+						    	
+						    }//End of if else that checks passing graade
+						}//End of if else that check semester align correctly
+
+
+						
+					}//End of if else for when year is the same
+					
+					
+					
+					
+					
+		//-----------------------------------Found Student has enrolled in PreReq----------------	
+				}else {
+					//If they didn't enroll and pass prereq
+					JOptionPane.showMessageDialog(new JDialog(),"Must enrolled and pass " + output +" first.");
+					return meetRequirement = false;
+				}//End of if else statement of whether they have a record of being enrolled in PreReq
+		//-----------------------------------Found Student has NOT enrolled in PreReq----------------	
+				
+			}else{
+				
+				return meetRequirement = true;
+			}//End of if else that states whethere there a pre req statement
+			
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(new JDialog(),"Error with checking Prerequisites please ensure information is correct.");
+			return meetRequirement = false;
+		}//End of try catch
+    	
+    	return meetRequirement;
+    	
+    }//End of checkPreReq
     
     //AKA enroll student into course
     private void addStudentToSection(String sectionNum, String courseNum, String semester, String year, String NNumber) {
@@ -1332,13 +1596,7 @@ LEFT JOIN
    
     }//End of displayEnrolled for assignStudentPanel
     
-    //----------------------------------------Student Grades  && Search Tab and Functionality------------------------------
-
+  
     
     
-    private JPanel searchPanel() {
-    	JPanel sPanel = new JPanel();
-    	
-    	return sPanel;
-    }
 }
