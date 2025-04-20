@@ -887,6 +887,7 @@ LEFT JOIN
     	sC.gridx = 0;
     	sC.gridy = 2;
     	sC.gridwidth = 1;
+    	sC.weighty = 0.0;
     	
     	JButton reset = new JButton("Reset");
     	sPanel.add(reset, sC);
@@ -901,6 +902,7 @@ LEFT JOIN
     	sC.gridwidth = 2;
     	sC.weightx = 1.0;
     	sC.weighty = 1.0;
+    	sC.fill = GridBagConstraints.BOTH;
     	sC.gridheight = GridBagConstraints.REMAINDER;
     	JTable display = new JTable();
     	loadCourseInfo(display);
@@ -1742,13 +1744,50 @@ LEFT JOIN
     	});
     	
     	return panel;
-    }
+    }//End of grade report panel
     
     private void generateReport(String studId) {
-    
-    
+        String sql = "SELECT s.first_name, s.last_name, s.n#, " +
+                     "e.course_number as course ,e.semester, e.year, " +
+                     "i.first_name as Instructor_first_name, " +
+                     "i.last_name as Instructor_last_name, " +
+                     "e.section#, e.grade  " +
+                     "FROM student s " +
+                     "JOIN enrolled_in e ON s.n# = e.n# " +
+                     "JOIN section ON section.year = e.year " +
+                     "AND section.semester = e.semester " +
+                     "AND section.course_number = e.course_number " +
+                     "AND section.section# = e.section# " +
+                     "JOIN instructor i ON i.n# = section.instructor_n# " +
+                     "WHERE UPPER(s.n#) = ?";
 
-    
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, studId.toUpperCase());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                ResultSetMetaData meta = rs.getMetaData();
+                int columns = meta.getColumnCount();
+
+                Vector<String> columnNames = new Vector<>();
+                for (int i = 1; i <= columns; i++) {
+                    columnNames.add(meta.getColumnName(i));
+                }
+
+                Vector<Vector<Object>> data = new Vector<>();
+                while (rs.next()) {
+                    Vector<Object> row = new Vector<>();
+                    for (int i = 1; i <= columns; i++) {
+                        row.add(rs.getObject(i));
+                    }
+                    data.add(row);
+                }
+
+                gradeReportTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error loading departments: " + e.getMessage());
+        }
     }//End of generateReport
     
     
