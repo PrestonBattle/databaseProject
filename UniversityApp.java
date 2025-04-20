@@ -23,7 +23,7 @@ public class UniversityApp {
     curPhoneField, curAddressField, minorField, majorField, permPhoneField, studentDegreeField;
     
     //JTables to represent current instances of departments and students.
-    private JTable departmentTable, studentTable, instructorTable, courseTable;
+    private JTable departmentTable, studentTable, instructorTable, courseTable, gradeReportTable;
     
    
    
@@ -85,7 +85,7 @@ public class UniversityApp {
         tabbedPane.addTab("Students", new JScrollPane(studentPanel));
 
         // Instructor Tab
-        JPanel instructorPanel = new JPanel();
+        JPanel instructorPanel = instructorPanel();
         tabbedPane.addTab("Instructors", instructorPanel);
         
         
@@ -104,6 +104,9 @@ public class UniversityApp {
         //Search
         JPanel searchPanel = searchPanel();
         tabbedPane.addTab("Search", searchPanel);
+        
+        JPanel gradePanel = gradeReportPanel();
+        tabbedPane.addTab("Grade Reports", gradePanel);
 
         //Place tab page on frame and make it visible
         frame.add(tabbedPane);
@@ -113,71 +116,57 @@ public class UniversityApp {
 //--------------------------------Student Tab and Functionality----------------------------------  
     //Method that will create and return the student panel
 	private JPanel studentPanel() {
-		//Create the panel with a borderlayout
     	JPanel panel = new JPanel(new BorderLayout());
 
-    	//Create inner panel to store all labels and inputs
     	JPanel inputPanel = new JPanel(new GridLayout(0, 4, 6, 6));
-    	//Name
+    	ssnField = new JTextField();
         fNameField = new JTextField();
         lNameField = new JTextField();
         midInitField = new JTextField();
-        //Primary Keys and Sex
         sexField = new JTextField();
-        ssnField = new JTextField();
+        
         nNumField = new JTextField();
-        //Current Address
         cityField = new JTextField();
         stateField = new JTextField();
         streetField = new JTextField();
         zipField = new JTextField();
         
-        //Permanent Address
         permCityField = new JTextField();
         permStateField = new JTextField();
         permStreetField = new JTextField();
         permZipField = new JTextField();
-        
-        //Major + Minor
         minorField = new JTextField();
         majorField = new JTextField();
-        //student attributes *Idea might just make another table for address*
+        //student attributes
         curPhoneField = new JTextField();
-        //curAddressField = new JTextField();
         permPhoneField = new JTextField();
-        //Classification of type of degree and year
+        curAddressField = new JTextField();
         degreeField = new JTextField();
+        studentDegreeField = new JTextField();
         studClassField = new JTextField();
         
-        //Spinner component for dates being created
+        
         SpinnerDateModel dateModel = new SpinnerDateModel();
-        //Adding arrows to said spinner
         JSpinner birthDateSpinner = new JSpinner(dateModel);
-        //Set the format to year month day
         birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, "yyyy-MM-dd"));
         
-        //Submit entered info button
+        
         JButton addButton = new JButton("Add Student");
         
-        //Add name labels and text fields to inner panel
         inputPanel.add(new JLabel("First Name:"));
         inputPanel.add(fNameField);
         inputPanel.add(new JLabel("Last Name:"));
         inputPanel.add(lNameField);
         inputPanel.add(new JLabel("Middle Initial:"));
         inputPanel.add(midInitField);
-        
-        //Add labels for primary keys and sex alongside input components to inner panel
         inputPanel.add(new JLabel("Sex:"));
         inputPanel.add(sexField);
-        inputPanel.add(new JLabel("Social Security Number:"));
-        inputPanel.add(ssnField);
-        inputPanel.add(new JLabel("Student N#:"));
-        inputPanel.add(nNumField);
         inputPanel.add(new JLabel("Birthdate:"));
         inputPanel.add(birthDateSpinner);
-        
-        //Add labels for current address alongside input
+        inputPanel.add(new JLabel("Student N#:"));
+        inputPanel.add(nNumField);
+        inputPanel.add(new JLabel("Social Security Number:"));
+        inputPanel.add(ssnField);
         inputPanel.add(new JLabel("Current Address"));
         inputPanel.add(new JLabel(""));
         inputPanel.add(new JLabel("Street:"));
@@ -188,9 +177,6 @@ public class UniversityApp {
         inputPanel.add(stateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(zipField);
-       
-        
-        //Add labels for permanent address and input
         inputPanel.add(new JLabel("Permenant Address"));
         inputPanel.add(new JLabel(""));
         inputPanel.add(new JLabel("Street:"));
@@ -201,100 +187,77 @@ public class UniversityApp {
         inputPanel.add(permStateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(permZipField);
-        
-        //Current Phone Number and Permanent Phone Number
         inputPanel.add(new JLabel("Current Phone:"));
         inputPanel.add(curPhoneField);
         inputPanel.add(new JLabel("Permanent Phone:"));
         inputPanel.add(permPhoneField);
-        
-        //Add labels for degree type, classification of which year in studies, 
         inputPanel.add(new JLabel("Degree:"));
-        inputPanel.add(degreeField);
+        inputPanel.add(studentDegreeField);
         inputPanel.add(new JLabel("Major Program:"));
         inputPanel.add(majorField);
         inputPanel.add(new JLabel("Minor Program:"));
         inputPanel.add(minorField);
         inputPanel.add(new JLabel("Class:"));
         inputPanel.add(studClassField);
-        
-        //Extra empty label added to get button push to the right
         inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
         
-        //Center all the user controls the top of of the page
-        panel.add(inputPanel, BorderLayout.NORTH);      
+        panel.add(inputPanel, BorderLayout.NORTH);
         
-        //panel.add(new JScrollPane(), BorderLayout.WEST);
-        
-        
-        //Create a table to represent all current student info give it scroll bar and put in center of page
         studentTable = new JTable();
         panel.add(new JScrollPane(studentTable), BorderLayout.CENTER);
         
-        //Give button functionality
         addButton.addActionListener(e -> {
-            //Name           
+        	String ssn = ssnField.getText().trim();
+            String nNum = nNumField.getText().trim();
             String fName = fNameField.getText().trim();
             String lName = lNameField.getText().trim();
             String midInit = midInitField.getText().trim();
-            
-            //Primary keys, sex, and birthdate
-            String nNum = nNumField.getText().trim();
             String sex = sexField.getText().trim();
-            String ssn = ssnField.getText().trim();
+            String currPhone = curPhoneField.getText().trim();
+            String permPhone = permPhoneField.getText().trim();
             Date birthDate = (Date) birthDateSpinner.getValue();
-              
-            //Current Address
             String street = streetField.getText().trim();
             String city = cityField.getText().trim();
             String state = stateField.getText().trim();
             String zip = zipField.getText().trim();
-            
-            //Permanent Address
             String permStreet = permStreetField.getText().trim();
             String permCity = permCityField.getText().trim();
             String permState = permStateField.getText().trim();
             String permZip = permZipField.getText().trim();
-            
-            //Current phone number and permanent phone number
-            String currPhone = curPhoneField.getText().trim();
-            String permPhone = permPhoneField.getText().trim();
-            
-            //Classification of degree type, major, minor, year in university
+            String curAddress = curAddressField.getText().trim();
             String major = majorField.getText().trim();
             String minor = minorField.getText().trim();
             String studClass = studClassField.getText().trim();
             String degree_program = degreeField.getText().trim();
             
-            //If N number or first name is empty don't accept input
-            if (nNum.isEmpty() || fName.isEmpty()) {
-                JOptionPane.showMessageDialog(panel, "Student N# and First Name are required.");
-                return;
-            }
-            
-            //Attempt to add info into corresponding tables
-            try {
-                addStudents(ssn, nNum, fName, midInit, lName, birthDate, sex, permZip, permCity, permState, permStreet, zip, city, state, street, permPhone,
-                            currPhone, degree_program, studClass);
-                
-                addMajorIn(nNum, major);
-                
-                if (!minor.isEmpty()) {
-                    addMinorIn(nNum, minor);
-                }
-                
-                //Loads current data from student table to be display
-                loadStudents();
-                
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
-            }//End of Try catch
 
+            if (minor.isEmpty()) {
+            	//handling students without minors
+            	try {
+            	//addPerson(id, ssn, fName, lName, birthDate, sex, city, state, street, zip, midInit);
+            	addStudents(ssn, nNum, fName, midInit, lName, birthDate, sex, permZip, permCity, permState, permStreet, zip, city, state, street, permPhone,
+                		currPhone, degree_program, studClass);
+            	addMajorIn(nNum, major);
+            	loadStudents();
+            	}catch (Exception ex) {
+            	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
+            	}
+               
+            } else if(!minor.isEmpty()){
+            	try {
+           
+                	//addStudents(id, curAddress, fName, lName, birthDate, sex, city, state, street, zip, midInit, phone, studClass, degree);
+                	addMinorIn(nNum, minor);
+                	loadStudents();
+                	}catch (Exception ex) {
+                	    JOptionPane.showMessageDialog(panel, "Student failed: " + ex.getMessage());
+                	}
+            }else {
+                JOptionPane.showMessageDialog(panel, "ID and Name are required.");
+            }
+        });
         
-        });//End of addActionListener for Button
-         
-      //Loads current data from student table to be display in case the attempt to insert values failed
         loadStudents();
         
         return panel;
@@ -534,11 +497,126 @@ LEFT JOIN
   
     //----------------------------------------Instructor Tab and Functionality------------------------
 	
-    private JPanel instrutorPanel() {
-    	JPanel iPanel = new JPanel();
+    private JPanel instructorPanel() {
+    	JPanel panel = new JPanel(new BorderLayout());
+
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        fNameField = new JTextField();
+        lNameField = new JTextField();
+        ssnField = new JTextField();
+        nNumField = new JTextField();
+        cityField = new JTextField();
+        stateField = new JTextField();
+        streetField = new JTextField();
+        zipField = new JTextField();
+        //student attributes
+        deptIdField = new JTextField();
+        officeNumField = new JTextField();
+        ageField = new JTextField();
+        officePhoneField = new JTextField();
+        
+        
+        
+        
+        
+        
+        JButton addButton = new JButton("Add Instructor");
+        
+        inputPanel.add(new JLabel("First Name:"));
+        inputPanel.add(fNameField);
+        inputPanel.add(new JLabel("Last Name:"));
+        inputPanel.add(lNameField);
+        inputPanel.add(new JLabel("Age:"));
+        inputPanel.add(ageField);
+        inputPanel.add(new JLabel("Instructor N#:"));
+        inputPanel.add(nNumField);
+        inputPanel.add(new JLabel("Social Security Number:"));
+        inputPanel.add(ssnField);
+        inputPanel.add(new JLabel("Current Address:"));
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(new JLabel("Street:"));
+        inputPanel.add(streetField);
+        inputPanel.add(new JLabel("City:"));
+        inputPanel.add(cityField);
+        inputPanel.add(new JLabel("State:"));
+        inputPanel.add(stateField);
+        inputPanel.add(new JLabel("Zip:"));
+        inputPanel.add(zipField);
+        inputPanel.add(new JLabel("Office Number:"));
+        inputPanel.add(officeNumField);
+        inputPanel.add(new JLabel("Office Phone:"));
+        inputPanel.add(officePhoneField);
+        inputPanel.add(new JLabel("Associated Dept:"));
+        inputPanel.add(degreeField);
+        
+       
+       
+        inputPanel.add(new JLabel()); 
+        inputPanel.add(addButton);
+        
+        panel.add(inputPanel, BorderLayout.NORTH);
+        
+        instructorTable = new JTable();
+        panel.add(new JScrollPane(instructorTable), BorderLayout.CENTER);
+        
+        addButton.addActionListener(e -> {
+        	String id = nNumField.getText().trim();
+            String sex = sexField.getText().trim();
+            String fName = fNameField.getText().trim();
+            String lName = lNameField.getText().trim();
+            String midInit = midInitField.getText().trim();
+            String ssn = ssnField.getText().trim();
+            int age = Integer.parseInt(ageField.getText().trim());
+            String phone = officePhoneField.getText().trim();
+
+            String street = streetField.getText().trim();
+            String city = cityField.getText().trim();
+            String state = stateField.getText().trim();
+            String zip = zipField.getText().trim();
+            
+            String officeNumber = officeNumField.getText().trim();
+
+            String dep = degreeField.getText().trim();
+            
+            addInstructor(ssn, id, fName, lName, age, officeNumber, zip, city, state, street, dep, phone);
+            loadInstructor();
+
+        });
+        loadInstructor();
+        
+        return panel;
+    }
+    
+    private void loadInstructor() {
+    	String sql = """
+    	        SELECT *
+    	        From instructor
+    	        """;
+    	try (Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+
+               ResultSetMetaData meta = rs.getMetaData();
+               int columns = meta.getColumnCount();
+
+               Vector<String> columnNames = new Vector<>();
+               for (int i = 1; i <= columns; i++) {
+                   columnNames.add(meta.getColumnName(i));
+               }
+
+               Vector<Vector<Object>> data = new Vector<>();
+               while (rs.next()) {
+                   Vector<Object> row = new Vector<>();
+                   for (int i = 1; i <= columns; i++) {
+                       row.add(rs.getObject(i));
+                   }
+                   data.add(row);
+               }
+
+               instructorTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+           } catch (SQLException e) {
+               JOptionPane.showMessageDialog(null, "Error loading students: " + e.getMessage());
+           }
     	
-    	
-    	return iPanel;
     }
     
     
@@ -841,7 +919,7 @@ LEFT JOIN
     				if( !dept.isEmpty() ) {
     					searchCoursesByDept(display,dept);
     				}else if( !instuctor.isEmpty() ) {
-    					searchCourseByInstructor(display,instuctor);
+    					searchCoursesByInstructor(instuctor,display);
     				}
     				
     			}//End of actionPerformed
@@ -896,8 +974,44 @@ LEFT JOIN
         }
     }
 
-    private void searchCourseByInstructor(JTable display, String input) {
-        
+    private void searchCoursesByInstructor(String instructorN, JTable display) {
+        String query = "SELECT * FROM SECTION WHERE INSTRUCTOR_N# = ?";
+
+        try {
+            //statement to execute the query
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, instructorN);  // Set the Instructor N# parameter
+
+            // query and retrieve the result
+            ResultSet result = statement.executeQuery();
+
+            //meta data of result (number of columns)
+            ResultSetMetaData meta = result.getMetaData();
+            int columnCount = meta.getColumnCount();
+
+            //hold table headers (column names)
+            Vector<String> columnHeaders = new Vector<String>();
+            for (int a = 1; a <= columnCount; a++) {
+                columnHeaders.add(meta.getColumnName(a));  // Add column names to the vector
+            }
+
+            // Vector holds table data
+            Vector<Vector<Object>> data = new Vector<>();
+            while (result.next()) {
+                Vector<Object> row = new Vector<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.add(result.getObject(i));  // Add each column's value to the row
+                }
+                data.add(row);  // Add the row to the data vector
+            }
+
+            //model for the JTable with the retrieved data and column headers
+            display.setModel(new DefaultTableModel(data, columnHeaders));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(new JDialog(), "Error retrieving courses for Instructor N#: " + instructorN);
+        }
     }
     
     
@@ -1596,7 +1710,47 @@ LEFT JOIN
    
     }//End of displayEnrolled for assignStudentPanel
     
-  
+  //------------------------------------------------------Grade Report-----------------------------
+    
+    private JPanel gradeReportPanel() {
+    	JPanel panel = new JPanel(new BorderLayout());
+    	
+    	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 6, 6));
+    	
+    	JTextField studIdField = new JTextField();
+    	JButton generateButton = new JButton("Generate Report");
+    	
+    	inputPanel.add(new JLabel("Generate Grade Report for Student"));
+    	inputPanel.add(new JLabel());
+    	
+    	inputPanel.add(new JLabel("Student N Number: "));
+    	inputPanel.add(new JLabel());
+    	inputPanel.add(studIdField);
+    	inputPanel.add(new JLabel());
+    	inputPanel.add(generateButton);
+    	inputPanel.add(new JLabel());
+    	
+    	panel.add(inputPanel, BorderLayout.NORTH);
+    	
+    	gradeReportTable = new JTable();
+    	panel.add(new JScrollPane(gradeReportTable), BorderLayout.CENTER);
+    	
+    	generateButton.addActionListener(e -> {
+    		
+    		String studId = studIdField.getText().trim();
+    		generateReport(studId);
+    	});
+    	
+    	return panel;
+    }
+    
+    private void generateReport(String studId) {
     
     
-}
+
+    
+    }//End of generateReport
+    
+    
+    
+}//End of program
