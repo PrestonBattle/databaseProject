@@ -25,6 +25,7 @@ public class UniversityApp {
     //JTables to represent current instances of departments and students.
     private JTable departmentTable, studentTable, instructorTable, courseTable, gradeReportTable;
     
+    private JLabel gpaLabel = new JLabel("GPA: ");
    
    
 
@@ -2073,60 +2074,98 @@ LEFT JOIN
     	
     	gradeReportTable = new JTable();
     	panel.add(new JScrollPane(gradeReportTable), BorderLayout.CENTER);
+    	panel.add(new JScrollPane(gpaLabel), BorderLayout.SOUTH);
     	
     	generateButton.addActionListener(e -> {
     		
     		String studId = studIdField.getText().trim();
     		generateReport(studId);
+    		
     	});
     	
     	return panel;
     }//End of grade report panel
     
-    private void generateReport(String studId) {
-        String sql = "SELECT s.first_name, s.last_name, s.n#, " +
-                     "e.course_number as course ,e.semester, e.year, " +
-                     "i.first_name as Instructor_first_name, " +
-                     "i.last_name as Instructor_last_name, " +
-                     "e.section#, e.grade  " +
-                     "FROM student s " +
-                     "JOIN enrolled_in e ON s.n# = e.n# " +
-                     "JOIN section ON section.year = e.year " +
-                     "AND section.semester = e.semester " +
-                     "AND section.course_number = e.course_number " +
-                     "AND section.section# = e.section# " +
-                     "JOIN instructor i ON i.n# = section.instructor_n# " +
-                     "WHERE UPPER(s.n#) = ?";
+    
+    	private void generateReport(String studId) {
+            String sql = "SELECT s.first_name, s.last_name, s.n#, " +
+                         "e.course_number as course ,e.semester, e.year, " +
+                         "i.first_name as Instructor_first_name, " +
+                         "i.last_name as Instructor_last_name, " +
+                         "e.section#, e.grade  " +
+                         "FROM student s " +
+                         "JOIN enrolled_in e ON s.n# = e.n# " +
+                         "JOIN section ON section.year = e.year " +
+                         "AND section.semester = e.semester " +
+                         "AND section.course_number = e.course_number " +
+                         "AND section.section# = e.section# " +
+                         "JOIN instructor i ON i.n# = section.instructor_n# " +
+                         "WHERE UPPER(s.n#) = ?";
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, studId.toUpperCase());
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, studId.toUpperCase());
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                ResultSetMetaData meta = rs.getMetaData();
-                int columns = meta.getColumnCount();
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    ResultSetMetaData meta = rs.getMetaData();
+                    int columns = meta.getColumnCount();
 
-                Vector<String> columnNames = new Vector<>();
-                for (int i = 1; i <= columns; i++) {
-                    columnNames.add(meta.getColumnName(i));
-                }
-
-                Vector<Vector<Object>> data = new Vector<>();
-                while (rs.next()) {
-                    Vector<Object> row = new Vector<>();
+                    Vector<String> columnNames = new Vector<>();
                     for (int i = 1; i <= columns; i++) {
-                        row.add(rs.getObject(i));
+                        columnNames.add(meta.getColumnName(i));
                     }
-                    data.add(row);
+
+                    Vector<Vector<Object>> data = new Vector<>();
+                    double totalPoints = 0;
+                    int courseCount = 0;
+
+                    while (rs.next()) {
+                        Vector<Object> row = new Vector<>();
+                        for (int i = 1; i <= columns; i++) {
+                            row.add(rs.getObject(i));
+                        }
+
+                        String grade = rs.getString("grade");
+                        Double gradePoint = getGradePoint(grade);
+                        if (gradePoint != null) {
+                            totalPoints += gradePoint;
+                            courseCount++;
+                        }
+
+                        data.add(row);
+                    }
+
+                    gradeReportTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+
+                    if (courseCount > 0) {
+                        double gpa = totalPoints / courseCount;
+                        gpaLabel.setText("GPA: " + String.format("%.2f", gpa));
+                    } else {
+                        gpaLabel.setText("GPA: N/A (No valid grades found)");
+                    }
                 }
 
-                gradeReportTable.setModel(new javax.swing.table.DefaultTableModel(data, columnNames));
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "Error loading report: " + e.getMessage());
             }
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error loading departments: " + e.getMessage());
-        }
-    }//End of generateReport
+        }//End of generateReport
     
-    
+    	private Double getGradePoint(String grade) {
+        	
+        	if (grade == null) return null;
+            switch (grade.toUpperCase()) {
+                case "A": return 4.0;
+                case "A-": return 3.7;
+                case "B+": return 3.3;
+                case "B": return 3.0;
+                case "B-": return 2.7;
+                case "C+": return 2.3;
+                case "C": return 2.0;
+                
+                case "D": return 1.0;
+                case "F": return 0.0;
+                case "FA": return 0.0;
+                default: return null; 
+            }
+        }//End of getGradePoint
     
 }//End of program
