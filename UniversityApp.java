@@ -16,7 +16,7 @@ public class UniversityApp {
     private Connection conn;
     
     //Private fields for the department
-    private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField,officePhoneField, ageField, officeNumField;
+    private JTextField deptIdField, deptIdFieldD, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField,officePhoneField, ageField, officeNumField;
     
     private JTextField lNameField, fNameField, midInitField,sexField, ssnFieldS,ssnFieldI,nNumFieldS,nNumField, cityField, stateField, streetField, zipField, permCityField, 
     permStateField, permStreetField, permZipField, degreeField, studClassField, 
@@ -515,7 +515,7 @@ LEFT JOIN
         
         //Inner panel that stores all user input
         JPanel inputPanel = new JPanel(new GridLayout(6, 2, 5, 5));
-        deptIdField = new JTextField();
+        deptIdFieldD = new JTextField();
         deptNameField = new JTextField();
         deptCollegeField = new JTextField();
         deptOfficeNumField = new JTextField();
@@ -526,7 +526,7 @@ LEFT JOIN
         inputPanel.add(new JLabel("Department Name:"));
         inputPanel.add(deptNameField);
         inputPanel.add(new JLabel("Department ID:"));
-        inputPanel.add(deptIdField);
+        inputPanel.add(deptIdFieldD);
         inputPanel.add(new JLabel("Department College:"));
         inputPanel.add(deptCollegeField);
         inputPanel.add(new JLabel("Department Office #:"));
@@ -545,12 +545,15 @@ LEFT JOIN
 
         //Add functionality to add department button
         addButton.addActionListener(e -> {
-            String id = deptIdField.getText().trim();
+            String id = deptIdFieldD.getText().trim();
             String name = deptNameField.getText().trim();
             String college = deptCollegeField.getText().trim();
             String officeNum = deptOfficeNumField.getText().trim();
             String phone = deptPhoneField.getText().trim();
 
+            
+            System.out.println("ID: " + id);
+            System.out.println("Name: " + name);
             
             if (!officeNum.matches("\\d{4}")) {
             	loadDepartments();
@@ -933,12 +936,15 @@ LEFT JOIN
     	JLabel courseHour = new JLabel("Course Hour:");
     	JTextField courseHourInput = new JTextField(20);
     	
+    	JLabel coursePreReq = new JLabel("Course PreReq number:");
+    	JTextField coursePreReqInput = new JTextField(20);
+    	
     	JButton submitCourseInfo = new JButton("Submit Course");
     	
     	//Display current data of courses
     	JTable displayInfo = new JTable();
     	loadCourseInfo(displayInfo);
-    	JScrollPane scrollPane = new JScrollPane(displayInfo);
+    	
     	
     
     	
@@ -992,15 +998,24 @@ LEFT JOIN
     	courseConstraints.gridx = 1;
     	cPanel.add(courseHourInput, courseConstraints);
     	
-    	//------------Row 6 Aka just the Button-----------
-    	courseConstraints.fill = GridBagConstraints.HORIZONTAL;
+    	//------------Row 6---------
     	courseConstraints.gridx = 0;
     	courseConstraints.gridy = 5;
+    	
+    	cPanel.add(coursePreReq, courseConstraints);
+    	courseConstraints.gridx = 1;
+    	cPanel.add(coursePreReqInput,courseConstraints);
+    	
+    	
+    	//------------Row 7 Aka just the Button-----------
+    	courseConstraints.fill = GridBagConstraints.HORIZONTAL;
+    	courseConstraints.gridx = 0;
+    	courseConstraints.gridy = 6;
     	courseConstraints.gridwidth = 2;
     	cPanel.add(submitCourseInfo, courseConstraints);
     	
-    	//------------Row 7 Aka the display area---------
-    	courseConstraints.gridy = 6;
+    	//------------Row 8 Aka the display area---------
+    	courseConstraints.gridy = 7;
     	courseConstraints.gridwidth = 2;
     	
     	courseConstraints.weighty = 1.0;
@@ -1035,9 +1050,12 @@ LEFT JOIN
 	                return;
 	            }
 	            
+	            String coursePreReq = coursePreReqInput.getText().trim().toUpperCase();
+	            
 	            if (!courseNumber.isEmpty() && !courseName.isEmpty()) {
 		            
 		            addCourses(courseNumber, courseName, courseDepartment, courseDescription, courseHours);
+		            addCoursePreReq(courseNumber,coursePreReq);
 		            
 	            }else{
 	                JOptionPane.showMessageDialog(new JDialog(),"ID and Name are required.");
@@ -1053,7 +1071,25 @@ LEFT JOIN
     	return cPanel;
     }//End of coursePanel
     
-    
+    private void addCoursePreReq(String courseId, String preReqCourseId) {
+        String insert = "INSERT INTO  course_prerequisites(COURSE_NUMBER,  Prerequisite_courses) VALUES (?, ?)";
+
+
+        //Insert the values given then add to table
+        try {
+            PreparedStatement state = conn.prepareStatement(insert);
+            state.setString(1,courseId);
+            state.setString(2,preReqCourseId);
+
+            state.executeUpdate();
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(new JDialog(),"");
+
+        }//End of try catch
+
+    }
     
     private void addCourses(String num, String name, String department, String desc, String hours) {
     	
@@ -1202,12 +1238,14 @@ LEFT JOIN
     				
     				String dept = courseDept.getText();
     				String instuctor = courseInst.getText();
-    				
+    				String section = sectionInst.getText();
     				
     				if( !dept.isEmpty() ) {
     					searchCoursesByDept(display,dept);
     				}else if( !instuctor.isEmpty() ) {
     					searchCoursesByInstructor(instuctor,display);
+    				}else if(!section.isEmpty()) {
+    					searchSectionsByInstructor( display, section);
     				}
     				
     			}//End of actionPerformed
@@ -1310,8 +1348,8 @@ LEFT JOIN
         }
     }//End of search by course
     
-    /*
-     * Literally same thing as searchCoursedByInstructor since courses are linked to instructors though sections
+    
+     // Literally same thing as searchCoursedByInstructor since courses are linked to instructors though sections
     private void searchSectionsByInstructor(JTable display, String instructorN) {
     	
     	String query = "SELECT * FROM SECTION WHERE INSTRUCTOR_N# = ?";
@@ -1353,7 +1391,7 @@ LEFT JOIN
         }
     	
     }//End of search section by instructor
-    */
+    
     
     //-------------------------------------Section Tab and Functionality---------------------------------------
     private JPanel sectionPanel() {
@@ -1725,7 +1763,7 @@ LEFT JOIN
 				String semester = semesterInput.getText();
 				String year = yearInput.getText();
 				String nNum = nNumber.getText();
-				String grade = gradeInput.getText();
+				String grade = gradeInput.getText().toUpperCase();
 				
 				if( section.isEmpty() ) {
 					JOptionPane.showMessageDialog(new JDialog(),"Section Number is required.");
@@ -1741,6 +1779,16 @@ LEFT JOIN
 					display.revalidate();
 					display.repaint();
 
+					
+					//Check grade input to make it valid
+					
+					String[] grades = {"A","B","C","D","F"};
+					if(Arrays.asList(grades).contains(grade)) {
+						JOptionPane.showMessageDialog(new JDialog(),"Grade is must a single letter.");
+						return;
+					}//End of if statement that checks it
+					
+					
 					assignGrade(section, courseNum, semester,year, grade, nNum);
 					displayEnrolled(display);
 				}else{
@@ -2005,7 +2053,7 @@ LEFT JOIN
     
     private void displayEnrolled(JTable display) {
     	System.out.println("Enroll display");
-    	String getEnrolled = "SELECT EI.*, C.NAME FROM ENROLLED_IN EI, COURSE C WHERE EI.COURSE_NUMBER = C.COURSE_NUMBER";
+    	String getEnrolled = "SELECT EI.*, C.NAME, P.PREREQUISITE_COURSES FROM ENROLLED_IN EI, COURSE C, COURSE_PREREQUISITES P WHERE EI.COURSE_NUMBER = C.COURSE_NUMBER AND P.COURSE_NUMBER = C.COURSE_NUMBER";
     	
     	try {
     		//Prepare statement foe execution
