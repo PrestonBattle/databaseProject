@@ -18,7 +18,7 @@ public class UniversityApp {
     //Private fields for the department
     private JTextField deptIdField, deptNameField, deptCollegeField, deptOfficeNumField, deptPhoneField,officePhoneField, ageField, officeNumField;
     
-    private JTextField lNameField, fNameField, midInitField,sexField, ssnField, nNumField, cityField, stateField, streetField, zipField, permCityField, 
+    private JTextField lNameField, fNameField, midInitField,sexField, ssnFieldS,ssnFieldI,nNumFieldS,nNumField, cityField, stateField, streetField, zipField, permCityField, 
     permStateField, permStreetField, permZipField, degreeField, studClassField, 
     curPhoneField, curAddressField, minorField, majorField, permPhoneField, studentDegreeField;
     
@@ -119,36 +119,43 @@ public class UniversityApp {
     	JPanel panel = new JPanel(new BorderLayout());
 
     	JPanel inputPanel = new JPanel(new GridLayout(0, 4, 6, 6));
-    	ssnField = new JTextField();
-        fNameField = new JTextField();
-        lNameField = new JTextField();
-        midInitField = new JTextField();
-        sexField = new JTextField();
+    	
+    	//Names
+        fNameField = new JTextField(20);
+        lNameField = new JTextField(20);
+        midInitField = new JTextField(1);
+    	
+    	//Primary Keys and sex
+        ssnFieldS = new JTextField(11);
+        nNumFieldS = new JTextField(9);
+    	sexField = new JTextField(6);
         
-        nNumField = new JTextField();
-        cityField = new JTextField();
-        stateField = new JTextField();
-        streetField = new JTextField();
-        zipField = new JTextField();
+        //Current Address
+        cityField = new JTextField(20);
+        stateField = new JTextField(15);
+        streetField = new JTextField(20);
+        zipField = new JTextField(5);
         
-        permCityField = new JTextField();
-        permStateField = new JTextField();
-        permStreetField = new JTextField();
-        permZipField = new JTextField();
-        minorField = new JTextField();
-        majorField = new JTextField();
-        //student attributes
-        curPhoneField = new JTextField();
-        permPhoneField = new JTextField();
-        curAddressField = new JTextField();
-        degreeField = new JTextField();
-        studentDegreeField = new JTextField();
-        studClassField = new JTextField();
+        permCityField = new JTextField(20);
+        permStateField = new JTextField(15);
+        permStreetField = new JTextField(20);
+        permZipField = new JTextField(5);
+        
+        //Contact
+        permPhoneField = new JTextField(12);
+        curPhoneField = new JTextField(12);
+        
+      //student attributes
+        
+        studentDegreeField = new JTextField(15);
+        studClassField = new JTextField(17);
+        minorField = new JTextField(50);
+        majorField = new JTextField(50);
         
         
         SpinnerDateModel dateModel = new SpinnerDateModel();
         JSpinner birthDateSpinner = new JSpinner(dateModel);
-        birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, "yyyy-MM-dd"));
+        birthDateSpinner.setEditor(new JSpinner.DateEditor(birthDateSpinner, "MM-DD-YYYY"));
         
         
         JButton addButton = new JButton("Add Student");
@@ -159,14 +166,17 @@ public class UniversityApp {
         inputPanel.add(lNameField);
         inputPanel.add(new JLabel("Middle Initial:"));
         inputPanel.add(midInitField);
+        
+        inputPanel.add(new JLabel("Social Security Number:"));
+        inputPanel.add(ssnFieldS);
+        inputPanel.add(new JLabel("Student N#:"));
+        inputPanel.add(nNumFieldS);
         inputPanel.add(new JLabel("Sex:"));
         inputPanel.add(sexField);
         inputPanel.add(new JLabel("Birthdate:"));
         inputPanel.add(birthDateSpinner);
-        inputPanel.add(new JLabel("Student N#:"));
-        inputPanel.add(nNumField);
-        inputPanel.add(new JLabel("Social Security Number:"));
-        inputPanel.add(ssnField);
+        
+       
         inputPanel.add(new JLabel("Current Address"));
         inputPanel.add(new JLabel(""));
         inputPanel.add(new JLabel("Street:"));
@@ -177,6 +187,8 @@ public class UniversityApp {
         inputPanel.add(stateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(zipField);
+        
+        
         inputPanel.add(new JLabel("Permenant Address"));
         inputPanel.add(new JLabel(""));
         inputPanel.add(new JLabel("Street:"));
@@ -187,18 +199,22 @@ public class UniversityApp {
         inputPanel.add(permStateField);
         inputPanel.add(new JLabel("Zip:"));
         inputPanel.add(permZipField);
+        
+        
         inputPanel.add(new JLabel("Current Phone:"));
         inputPanel.add(curPhoneField);
         inputPanel.add(new JLabel("Permanent Phone:"));
         inputPanel.add(permPhoneField);
+        
+        
         inputPanel.add(new JLabel("Degree:"));
         inputPanel.add(studentDegreeField);
+        inputPanel.add(new JLabel("Class:"));
+        inputPanel.add(studClassField);
         inputPanel.add(new JLabel("Major Program:"));
         inputPanel.add(majorField);
         inputPanel.add(new JLabel("Minor Program:"));
         inputPanel.add(minorField);
-        inputPanel.add(new JLabel("Class:"));
-        inputPanel.add(studClassField);
         inputPanel.add(new JLabel()); 
         inputPanel.add(addButton);
         
@@ -208,15 +224,100 @@ public class UniversityApp {
         panel.add(new JScrollPane(studentTable), BorderLayout.CENTER);
         
         addButton.addActionListener(e -> {
-        	String ssn = ssnField.getText().trim();
-            String nNum = nNumField.getText().trim();
-            String fName = fNameField.getText().trim();
-            String lName = lNameField.getText().trim();
-            String midInit = midInitField.getText().trim();
-            String sex = sexField.getText().trim();
+        	
+        	String ssn = ssnFieldS.getText().trim();
+            String nNum = nNumFieldS.getText().trim().toUpperCase();
+            
+            if (ssn.length() > 11) {
+                ssn = ssn.substring(0, 11);
+            }else if(ssn.length() < 11){
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid SSN format, too short.");
+                return; // Exit early
+            	
+            }//End of if to ensure correct length
+            
+            if (nNum.length() > 9) {
+            	nNum = nNum.substring(0, 9);
+            }else if(nNum.length() < 9) {
+            	
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid N number format, too short.");
+                return; // Exit early
+            	
+            }//End of if to ensure correct length
+            
+            System.out.println("SSN entered: " + ssn );
+            System.out.println("N entered: " + nNum );
+            
+            
+         // Validate SSN
+            if (!ssn.matches("\\d{3}-\\d{2}-\\d{4}")) {
+            	
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid SSN format. Use ###-##-####");
+                return; // Exit early
+            }
+
+            // Validate N-Number
+            if (!nNum.matches("^N\\d{8}$")) {
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid N-Number format. Use N########");
+                return; // Exit early
+            }
+            
+            
+            
+            String fName = fNameField.getText().trim().toUpperCase();
+            String lName = lNameField.getText().trim().toUpperCase();
+            String midInit = midInitField.getText().trim().toUpperCase();
+            
+            if(fName.isEmpty() || lName.isEmpty()) {
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "First and Last Name are mandatory");
+                return; // Exit early
+            }else if(fName.matches(".*\\d.*")) {
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Name cannot contain numbers.");
+                return; //Exit early
+            }
+            
+            String[] sexOptions = {"Male", "Female", "Intersex", "Unspecified"};
+            String sex = sexField.getText().trim().toUpperCase();
+            if(  sex.startsWith("M") ) {
+            	
+            	sex = sexOptions[0];
+            	
+            }else if( sex.startsWith("F")) {
+            	
+            	sex = sexOptions[1];
+            	
+            }else if( sex.startsWith("I")) {
+            	
+            	sex = sexOptions[2];
+            	
+            }else {
+            	sex = sexOptions[3];
+            }
+            
             String currPhone = curPhoneField.getText().trim();
             String permPhone = permPhoneField.getText().trim();
+            
+            if (!currPhone.isEmpty() && !currPhone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+            	loadStudents();
+            	JOptionPane.showMessageDialog(panel, "Phone number must be in the format ###-###-####");
+                return;
+            }
+            
+            if (!permPhone.isEmpty() && !permPhone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+            	loadStudents();
+            	JOptionPane.showMessageDialog(panel, "Phone number must be in the format ###-###-####");
+                return;
+            }
+            
             Date birthDate = (Date) birthDateSpinner.getValue();
+            
+            
             String street = streetField.getText().trim();
             String city = cityField.getText().trim();
             String state = stateField.getText().trim();
@@ -225,11 +326,49 @@ public class UniversityApp {
             String permCity = permCityField.getText().trim();
             String permState = permStateField.getText().trim();
             String permZip = permZipField.getText().trim();
-            String curAddress = curAddressField.getText().trim();
+            
+            
             String major = majorField.getText().trim();
-            String minor = minorField.getText().trim();
+            
+            if(major.isEmpty()) {
+            	
+            	major = "Undeclared";
+            }
+            
+            String minor = minorField.getText().trim().toUpperCase();
+            
+            
+            String[] classifications = {
+            	    "Freshman",
+            	    "Sophomore",
+            	    "Junior",
+            	    "Senior",
+            	    "Undergraduate",
+            	    "Graduate"
+            };
+            
             String studClass = studClassField.getText().trim();
-            String degree_program = degreeField.getText().trim();
+            
+            boolean validClass = Arrays.asList(classifications).contains(studClass);
+            
+            if (!validClass) {
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid classification. Please enter a valid student classification.");
+                return;
+            }
+            
+            
+            String[] degrees = {"A.S","A.A","B.S","B.A","M.S","M.A","Ph.D"};
+            
+            String degree_program = studentDegreeField.getText().trim().toUpperCase();
+            
+            boolean validDegreeProgram = Arrays.asList(degrees).contains(degree_program);
+            
+            if (!validDegreeProgram) {
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid Degree Program. Please enter a valid degree program. Such as \"A.S A.A B.S B.A M.S M.A Ph.D\"");
+                return;
+            }
             
 
             if (minor.isEmpty()) {
@@ -411,6 +550,34 @@ LEFT JOIN
             String officeNum = deptOfficeNumField.getText().trim();
             String phone = deptPhoneField.getText().trim();
 
+            
+            if (!officeNum.matches("\\d{4}")) {
+            	loadDepartments();
+                JOptionPane.showMessageDialog(panel, "Office number must be exactly 4 digits.");
+                return;
+            }else if(officeNum.isEmpty()) {
+            	loadDepartments();
+                JOptionPane.showMessageDialog(panel, "Office number is mandatory.");
+                return;
+            }
+            
+            if (college.isEmpty()) {
+            	loadDepartments();
+                JOptionPane.showMessageDialog(panel, "College is mandatory.");
+                return;
+            }
+            
+            if (!phone.isEmpty() && !phone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+            	loadDepartments();
+            	JOptionPane.showMessageDialog(panel, "Phone number must be in the format ###-###-####");
+                return;
+            }else if( phone.isEmpty() ) {
+            	loadDepartments();
+                JOptionPane.showMessageDialog(panel, "Phone number is mandatory");
+                return;
+            }
+            
+            
             //If ID or name is empty refuse input elsewise proceed
             if (!id.isEmpty() && !name.isEmpty()) {
                 addDepartment(id, name, college, officeNum, phone);
@@ -501,18 +668,20 @@ LEFT JOIN
     	JPanel panel = new JPanel(new BorderLayout());
 
     	JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
-        fNameField = new JTextField();
-        lNameField = new JTextField();
-        ssnField = new JTextField();
-        nNumField = new JTextField();
+        //Instructor info
+    	fNameField = new JTextField(20);
+        lNameField = new JTextField(20);
+        ssnFieldI = new JTextField(11);
+        nNumField = new JTextField(9);
+        ageField = new JTextField(3);
+        //Address
         cityField = new JTextField();
         stateField = new JTextField();
         streetField = new JTextField();
         zipField = new JTextField();
-        //student attributes
+        //Department attributes
         deptIdField = new JTextField();
         officeNumField = new JTextField();
-        ageField = new JTextField();
         officePhoneField = new JTextField();
         
         
@@ -531,7 +700,7 @@ LEFT JOIN
         inputPanel.add(new JLabel("Instructor N#:"));
         inputPanel.add(nNumField);
         inputPanel.add(new JLabel("Social Security Number:"));
-        inputPanel.add(ssnField);
+        inputPanel.add(ssnFieldI);
         inputPanel.add(new JLabel("Current Address:"));
         inputPanel.add(new JLabel()); 
         inputPanel.add(new JLabel("Street:"));
@@ -547,7 +716,7 @@ LEFT JOIN
         inputPanel.add(new JLabel("Office Phone:"));
         inputPanel.add(officePhoneField);
         inputPanel.add(new JLabel("Associated Dept:"));
-        inputPanel.add(degreeField);
+        inputPanel.add(deptIdField);
         
        
        
@@ -560,22 +729,115 @@ LEFT JOIN
         panel.add(new JScrollPane(instructorTable), BorderLayout.CENTER);
         
         addButton.addActionListener(e -> {
+        	
         	String id = nNumField.getText().trim();
+        	String ssn = ssnFieldI.getText().trim();
+        	
+        	if (ssn.length() > 11) {
+                ssn = ssn.substring(0, 11);
+            }else if(ssn.length() < 11){
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid SSN format, too short.");
+                return; // Exit early
+            	
+            }//End of if to ensure correct length
+            
+            if (id.length() > 9) {
+            	id = id.substring(0, 9);
+            }else if(id.length() < 9) {
+            	
+            	loadStudents();
+                JOptionPane.showMessageDialog(panel, "Invalid N number format, too short.");
+                return; // Exit early
+            	
+            }//End of if to ensure correct length
+            
+            System.out.println("SSN entered: " + ssn );
+            System.out.println("N entered: " + id );
+            
+            
+         // Validate SSN
+            if (!ssn.matches("\\d{3}-\\d{2}-\\d{4}")) {
+            	
+            	loadInstructor();
+                JOptionPane.showMessageDialog(panel, "Invalid SSN format. Use ###-##-####");
+                return; // Exit early
+            }
+            
+            // Validate N-Number
+            if (!id.matches("^N\\d{8}$")) {
+            	loadInstructor();
+                JOptionPane.showMessageDialog(panel, "Invalid N-Number format. Use N########");
+                return; // Exit early
+            }
+            
+
+        	
             String sex = sexField.getText().trim();
+            
             String fName = fNameField.getText().trim();
             String lName = lNameField.getText().trim();
             String midInit = midInitField.getText().trim();
-            String ssn = ssnField.getText().trim();
-            int age = Integer.parseInt(ageField.getText().trim());
+            
+            if(fName.isEmpty() || lName.isEmpty()) {
+            	loadInstructor();
+                JOptionPane.showMessageDialog(panel, "First and Last Name are mandatory.");
+                return; // Exit early
+            	
+            }//End of if statement that checks if user entered first name and last name
+            
+            String ageInput = ageField.getText().trim();
+            
+            if (ageInput.isEmpty()) {
+                loadInstructor();
+                JOptionPane.showMessageDialog(panel, "Age is mandatory.");
+                return;
+            }//End of if to check if age info was even entered
+
+            int age;
+            try {
+                age = Integer.parseInt(ageInput);
+            } catch (NumberFormatException ex) {
+                loadInstructor();
+                JOptionPane.showMessageDialog(panel, "Age must be a number.");
+                return;
+            }//End of testing if input was even a number
+            
             String phone = officePhoneField.getText().trim();
+            
+            if (!phone.isEmpty() && !phone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+            	loadInstructor();
+            	JOptionPane.showMessageDialog(panel, "Phone number must be in the format ###-###-####");
+                return;
+            }else if(phone.isEmpty()){
+            	
+            	loadInstructor();
+            	JOptionPane.showMessageDialog(panel, "Phone number is mandatory");
+                return;
+            }//End of if else to check if phone number is in right input and that they entered anything at all
 
             String street = streetField.getText().trim();
             String city = cityField.getText().trim();
             String state = stateField.getText().trim();
             String zip = zipField.getText().trim();
             
+            if( street.isEmpty() || city.isEmpty() || state.isEmpty() || zip.isEmpty() ) {
+            	
+            	loadInstructor();
+            	JOptionPane.showMessageDialog(panel, "Address information is mandatory");
+                return;
+            	
+            }//End of if that checks if address info was entered
+            
             String officeNumber = officeNumField.getText().trim();
 
+            if( officeNumber.isEmpty() ) {
+            	
+            	loadInstructor();
+            	JOptionPane.showMessageDialog(panel, "Office Number is mandatory.");
+            	
+            }//End of if that checks if address info was entered
+            
             String dep = degreeField.getText().trim();
             
             addInstructor(ssn, id, fName, lName, age, officeNumber, zip, city, state, street, dep, phone);
@@ -646,7 +908,7 @@ LEFT JOIN
 	}
     
 
-    
+  //------------------------------------- Course Tab and Functionality--------------------------------
     //--------------------------------------Course Tab and Functionality----------------------------
     private JPanel coursePanel() {
     	// Create the main panel with GridBagLayout for flexible component arrangement
@@ -755,13 +1017,24 @@ LEFT JOIN
 	            // Action to perform when the button is clicked
 	            System.out.println("Course Button Clicked!");
 	            
-	            String courseNumber = courseNumberInput.getText().trim();
-	            String courseName = courseNameInput.getText().trim();
-	            String courseDepartment = courseDepartmentInput.getText().trim();
-	            String courseDescription = courseDescriptionInput.getText().trim();
+	            String courseNumber = courseNumberInput.getText().trim().toUpperCase();
+	            String courseName = courseNameInput.getText().trim().toUpperCase();
+	            
+	            if (!courseNumber.matches("^[A-Z]{3}\\d{4}$")) {
+	                JOptionPane.showMessageDialog(new JDialog(), "Course Number must be 3 letters followed by 4 digits (e.g., CIS3020).");
+	                return;
+	            }
+	            
+	            String courseDepartment = courseDepartmentInput.getText().trim().toUpperCase();
+	            String courseDescription = courseDescriptionInput.getText().trim().toUpperCase();
 	            String courseHours = courseHourInput.getText().trim();
 	            
-	            if (!courseNumber.isEmpty() && !courseDepartment.isEmpty()) {
+	            if (!courseHours.matches("\\d+")) {
+	                JOptionPane.showMessageDialog(new JDialog(), "Course Hours must be a numeric value.");
+	                return;
+	            }
+	            
+	            if (!courseNumber.isEmpty() && !courseName.isEmpty()) {
 		            
 		            addCourses(courseNumber, courseName, courseDepartment, courseDescription, courseHours);
 		            
@@ -884,8 +1157,20 @@ LEFT JOIN
     	sPanel.add(courseInst, sC);
     	
     	//-----------------Row3-------------
+    	
     	sC.gridx = 0;
     	sC.gridy = 2;
+    	
+    	JLabel sectionI = new JLabel("Search Section by Instructor:");
+    	sPanel.add(sectionI, sC);
+    	sC.gridx = 1;
+    	JTextField sectionInst = new JTextField(20);
+    	sPanel.add(sectionInst, sC);
+    	
+    	//-----------------Row4-------------
+    	
+    	sC.gridx = 0;
+    	sC.gridy = 3;
     	sC.gridwidth = 1;
     	sC.weighty = 0.0;
     	
@@ -898,7 +1183,7 @@ LEFT JOIN
     
     	//---------------Display Result----------------
     	sC.gridx = 0;
-    	sC.gridy = 3;
+    	sC.gridy = 4;
     	sC.gridwidth = 2;
     	sC.weightx = 1.0;
     	sC.weighty = 1.0;
@@ -940,9 +1225,12 @@ LEFT JOIN
 	
     	
     	return sPanel;
-    }
+    }//End of search panel
+   
+    
     
     private void searchCoursesByDept(JTable display,String deptId) {
+
         String sql = """
             SELECT *
             FROM course
@@ -973,7 +1261,12 @@ LEFT JOIN
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error loading courses: " + e.getMessage());
-        }
+            
+      }//End of search course by department
+        
+        
+        
+        
     }
 
     private void searchCoursesByInstructor(String instructorN, JTable display) {
@@ -1014,8 +1307,52 @@ LEFT JOIN
             e.printStackTrace();
             JOptionPane.showMessageDialog(new JDialog(), "Error retrieving courses for Instructor N#: " + instructorN);
         }
-    }
+    }//End of search by course
     
+    /*
+     * Literally same thing as searchCoursedByInstructor since courses are linked to instructors though sections
+    private void searchSectionsByInstructor(JTable display, String instructorN) {
+    	
+    	String query = "SELECT * FROM SECTION WHERE INSTRUCTOR_N# = ?";
+
+        try {
+            //statement to execute the query
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, instructorN);  // Set the Instructor N# parameter
+
+            // query and retrieve the result
+            ResultSet result = statement.executeQuery();
+
+            //meta data of result (number of columns)
+            ResultSetMetaData meta = result.getMetaData();
+            int columnCount = meta.getColumnCount();
+
+            //hold table headers (column names)
+            Vector<String> columnHeaders = new Vector<String>();
+            for (int a = 1; a <= columnCount; a++) {
+                columnHeaders.add(meta.getColumnName(a));  // Add column names to the vector
+            }
+
+            // Vector holds table data
+            Vector<Vector<Object>> data = new Vector<>();
+            while (result.next()) {
+                Vector<Object> row = new Vector<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.add(result.getObject(i));  // Add each column's value to the row
+                }
+                data.add(row);  // Add the row to the data vector
+            }
+
+            //model for the JTable with the retrieved data and column headers
+            display.setModel(new DefaultTableModel(data, columnHeaders));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(new JDialog(), "Error retrieving Sections for Instructor N#: " + instructorN);
+        }
+    	
+    }//End of search section by instructor
+    */
     
     //-------------------------------------Section Tab and Functionality---------------------------------------
     private JPanel sectionPanel() {
@@ -1667,7 +2004,7 @@ LEFT JOIN
     
     private void displayEnrolled(JTable display) {
     	System.out.println("Enroll display");
-    	String getEnrolled = "SELECT * FROM ENROLLED_IN";
+    	String getEnrolled = "SELECT EI.*, C.NAME FROM ENROLLED_IN EI, COURSE C WHERE EI.COURSE_NUMBER = C.COURSE_NUMBER";
     	
     	try {
     		//Prepare statement foe execution
