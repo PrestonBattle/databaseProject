@@ -114,6 +114,14 @@ public class UniversityApp {
         frame.setVisible(true);
     }//End of createAndShowGUI
     
+    
+    public static String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
+    }
+    
 //--------------------------------Student Tab and Functionality----------------------------------  
     //Method that will create and return the student panel
 	private JPanel studentPanel() {
@@ -269,8 +277,8 @@ public class UniversityApp {
             
             
             
-            String fName = fNameField.getText().trim().toUpperCase();
-            String lName = lNameField.getText().trim().toUpperCase();
+            String fName = capitalizeFirstLetter(fNameField.getText().trim());
+            String lName = capitalizeFirstLetter(lNameField.getText().trim().toUpperCase());
             String midInit = midInitField.getText().trim().toUpperCase();
             
             if(fName.isEmpty() || lName.isEmpty()) {
@@ -546,8 +554,8 @@ LEFT JOIN
         //Add functionality to add department button
         addButton.addActionListener(e -> {
             String id = deptIdFieldD.getText().trim();
-            String name = deptNameField.getText().trim();
-            String college = deptCollegeField.getText().trim();
+            String name = capitalizeFirstLetter(deptNameField.getText().trim());
+            String college = capitalizeFirstLetter(deptCollegeField.getText().trim());
             String officeNum = deptOfficeNumField.getText().trim();
             String phone = deptPhoneField.getText().trim();
 
@@ -734,7 +742,7 @@ LEFT JOIN
         
         addButton.addActionListener(e -> {
         	
-        	String id = nNumField.getText().trim();
+        	String id = nNumField.getText().trim().toUpperCase();
         	String ssn = ssnFieldI.getText().trim();
         	
         	if (ssn.length() > 11) {
@@ -779,9 +787,9 @@ LEFT JOIN
         	
             String sex = sexField.getText().trim();
             
-            String fName = fNameField.getText().trim();
-            String lName = lNameField.getText().trim();
-            String midInit = midInitField.getText().trim();
+            String fName = capitalizeFirstLetter(fNameField.getText().trim());
+            String lName = capitalizeFirstLetter(lNameField.getText().trim());
+            String midInit = midInitField.getText().trim().toUpperCase();
             
             if(fName.isEmpty() || lName.isEmpty()) {
             	loadInstructor();
